@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MicroRacers POL — On-Chain</title>
+  <style>
+    :root{
+      /* Fondo */
+      --bg: #0b0f14;
+
+      /* Tarjetas / paneles */
+      --card: #16221c;
+      --border: rgba(255,255,255,0.08);
+
+      /* Texto */
+      --text: #f3f4f6;
+      --muted: rgba(203,213,225,0.70);
+
+      /* Estados */
+      --ok: #22c55e;
+      --bad: #ef4444;
+      --warn: #facc15;
+
+      /* Botones */
+      --btn: rgba(255,255,255,0.06);
+      --btn2: linear-gradient(135deg,#22c55e,#3b82f6);
+
+      /* Extras */
+      --shadow: 0 12px 34px rgba(0,0,0,0.55);
+      --radius: 16px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(0,255,163,0.08), transparent 60%),
+        radial-gradient(1200px 800px at 80% 20%, rgba(0,140,255,0.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-family: Arial, sans-serif;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:18px;
+    }
+    .panel{
+      width:100%;
+      max-width: 760px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom: 12px;
+    }
+    .title{ font-size:28px; font-weight:800; letter-spacing: .2px; }
+    .subtitle{ font-size:12px; color:var(--muted); margin-top: 4px; line-height:1.35; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.22);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (max-width: 780px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: rgba(0,255,163,0.07);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .row{ margin-top: 10px; font-size: 16px; }
+    .small{ font-size: 12px; color: var(--muted); word-break: break-word; margin-top: 6px; }
+    .status{
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      margin-left: 10px;
+      display:inline-block;
+      transform: translateY(-2px);
+    }
+    .ok{ color: var(--ok); }
+    .bad{ color: var(--bad); }
+    .warn{ color: var(--warn); }
+
+    .controls{
+      background: rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .controls h3{
+      margin:0 0 10px 0;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .inputRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top: 10px;
+    }
+    .input{
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+    }
+    .btn{
+      width: 100%;
+      padding: 13px 14px;
+      font-size: 15px;
+      font-weight: 800;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text);
+      background: var(--btn);
+      transition: .18s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px); opacity:.95; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+    .btnPrimary{
+      background: var(--btn2);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .btnLine{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btnLine3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 560px){
+      .btnLine, .btnLine3{ grid-template-columns: 1fr; }
+    }
+
+    /* Toast */
+    .toastWrap{
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(740px, calc(100vw - 28px));
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:auto;
+      background: rgba(0,0,0,0.60);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      animation: pop .18s ease;
+    }
+    @keyframes pop{ from{ transform: translateY(8px); opacity:0; } to{ transform: translateY(0); opacity:1; } }
+    .toast .t{ font-size: 13px; color: var(--text); }
+    .toast .x{
+      background: rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor:pointer;
+      font-weight: 800;
+    }
+
+    /* Loader */
+    .spinner{
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: rgba(255,255,255,0.85);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      display:inline-block;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* History */
+    .history{
+      margin-top: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .historyTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .history h3{ margin:0; font-size: 14px; color: var(--muted); font-weight: 800; }
+    .historyList{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height: 260px;
+      overflow:auto;
+      padding-right: 4px;
+    }
+    .item{
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .item .l{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 0;
+    }
+    .item .r{
+      text-align:right;
+      white-space:nowrap;
+      font-weight: 800;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .link{
+      color: rgba(231,237,245,0.85);
+      text-decoration: underline;
+      cursor:pointer;
+    }
+    .muted{ color: var(--muted); }
+  </style>
+</head>
+
+<body>
+  <div class="panel">
+    <div class="top">
+      <div>
+        <div class="title">MicroRacers POL</div>
+        <div class="subtitle">
+          Juego on-chain en <b>Polygon Amoy</b> • ROI tope +20% • Carreras limitadas<br/>
+          Contrato V2: <span id="contract" class="mono"></span>
+        </div>
+      </div>
+      <div class="pill">
+        <span id="netDot">●</span>
+        <span id="network">—</span>
+        <span class="muted">|</span>
+        <span id="wallet">wallet: —</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card">
+        <div class="row">
+          🚗 Auto #<span id="tokenId">—</span>
+          <span id="status" class="status">—</span>
+        </div>
+
+        <div class="row">Carreras: <b id="races">—</b> / <span id="racesTotal">—</span></div>
+        <div class="row">Retorno: <b id="returned">—</b> / <span id="maxReturn">—</span> POL</div>
+
+        <div class="small">Owner: <span id="owner" class="mono">—</span></div>
+        <div class="small">Última recompensa: <b id="lastReward">—</b> POL</div>
+        <div class="small">Última tx: <span id="lastTx" class="mono">—</span></div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="controls">
+        <h3>Acciones</h3>
+
+        <button id="btnConnect" class="btn" onclick="connect()">🔌 Conectar MetaMask</button>
+
+        <div class="btnLine">
+          <button id="btnSwitch" class="btn" onclick="switchToAmoy()">🧭 Cambiar a Amoy</button>
+          <button id="btnRead" class="btn btnPrimary" onclick="readCar()">📥 Leer Auto</button>
+        </div>
+
+        <!-- ✅ SELECTOR DE AUTOS DEL JUGADOR -->
+        <div class="inputRow">
+          <select id="carSelect" class="input" onchange="onSelectCar()" disabled>
+            <option value="">— Tus autos (conectá wallet) —</option>
+          </select>
+        </div>
+        <div class="small" id="carSelectHint" style="margin-top:6px;">
+          Tip: el desplegable se arma leyendo eventos <b>CarMinted</b> y verificando el owner actual.
+        </div>
+
+        <div class="inputRow">
+          <input id="tokenInput" class="input" type="number" min="1" step="1" value="1" />
+        </div>
+
+        <div class="btnLine">
+          <button id="btnMint" class="btn" onclick="mint()">🧾 Mint (0.01 POL)</button>
+          <button id="btnRace" class="btn btnPrimary" onclick="race()">🏁 CORRER</button>
+        </div>
+
+        <div class="btnLine3">
+          <button class="btn" onclick="clearHistory()">🧹 Limpiar historial</button>
+          <button class="btn" onclick="copyAddress()">📋 Copiar wallet</button>
+          <button class="btn" onclick="openExplorer()">🔎 Ver en Explorer</button>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Consejo dev: en testnet, si hay picos de gas, subí <b>priority fee</b> (ej. 50 gwei) y <b>max fee</b> (200 gwei).
+        </div>
+      </div>
+    </div>
+
+    <div class="history">
+      <div class="historyTop">
+        <h3>Historial (últimas 30)</h3>
+        <div class="small">Se guarda en tu navegador (localStorage).</div>
+      </div>
+      <div id="historyList" class="historyList"></div>
+    </div>
+  </div>
+
+  <div class="toastWrap" id="toastWrap" style="display:none;">
+    <div class="toast">
+      <div class="t" id="toastText">—</div>
+      <button class="x" onclick="hideToast()">OK</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script>
+    // ================= CONFIG =================
+    const CONTRACT = "0xFd106a64a90799c45D2bDE224374ebDbeFE4f075";
+    const AMOY_ID_DEC = 80002;
+    const AMOY_ID_HEX = "0x13882"; // 80002
+
+    // ✅ Para acelerar el armado del selector:
+    // Si sabés el block de deploy del contrato, ponelo acá (ej. 12345678).
+    // Si lo dejás en 0, funciona igual pero puede tardar más en wallets con historial.
+    const DEPLOY_BLOCK_HINT = 0;
+
+    // Polygon Amoy params (para "add chain" si hace falta)
+    const AMOY_PARAMS = {
+      chainId: AMOY_ID_HEX,
+      chainName: "Polygon Amoy",
+      nativeCurrency: { name: "POL", symbol: "POL", decimals: 18 },
+      rpcUrls: ["https://rpc-amoy.polygon.technology/"],
+      blockExplorerUrls: ["https://amoy.polygonscan.com/"]
+    };
+
+    // ABI (incluye el evento RaceResult y CarMinted)
+    const ABI = [
+      "function mintCar() external payable",
+      "function race(uint256 tokenId) external",
+      "function getCar(uint256 tokenId) external view returns (uint256,uint256,uint256,uint256,address)",
+      "event RaceResult(uint256 indexed tokenId, address indexed player, uint256 reward, uint256 racesLeft, uint256 returnedAmount)",
+      "event CarMinted(uint256 indexed tokenId, address indexed owner, uint256 price, uint256 maxReturn)"
+    ];
+
+    // ================= STATE =================
+    let provider, signer, ro, rw;
+    let currentAccount = null;
+    let busy = false;
+
+    const HISTORY_KEY = "microracers_history_v1";
+    const HISTORY_MAX = 30;
+
+    // Cache en memoria de "mis autos" para no recalcular si no hace falta
+    let myCars = [];
+
+    // ================= HELPERS =================
+    const $ = id => document.getElementById(id);
+    const short = a => a ? a.slice(0,6)+"..."+a.slice(-4) : "—";
+
+    function showToast(text){
+      $("toastText").innerText = text;
+      $("toastWrap").style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(hideToast, 3500);
+    }
+    function hideToast(){
+      $("toastWrap").style.display = "none";
+    }
+
+    function setBusy(on, label=null){
+      busy = on;
+      const ids = ["btnConnect","btnSwitch","btnRead","btnMint","btnRace","carSelect","tokenInput"];
+      ids.forEach(id => {
+        const el = $(id);
+        if(!el) return;
+        el.disabled = on || (id === "carSelect" && !currentAccount); // select: solo habilita si hay cuenta
+      });
+
+      if(on){
+        $("btnRace").innerHTML = `${label ? label : "Procesando"} <span class="spinner"></span>`;
+      }else{
+        $("btnRace").innerHTML = "🏁 CORRER";
+      }
+    }
+
+    function setNetworkBadge(chainId){
+      const isAmoy = Number(chainId) === AMOY_ID_DEC;
+      $("network").innerText = isAmoy ? "Amoy" : `Chain ${chainId}`;
+      $("netDot").style.color = isAmoy ? "#4cffb2" : "#ffd66b";
+    }
+
+    function setConnectedUI(connected){
+      $("btnConnect").innerText = connected ? "✅ Wallet conectada" : "🔌 Conectar MetaMask";
+      $("carSelect").disabled = !connected || busy;
+      if(!connected){
+        $("carSelect").innerHTML = `<option value="">— Tus autos (conectá wallet) —</option>`;
+      }
+    }
+
+    function fmtPol(x){
+      const n = Number(x);
+      if (!isFinite(n)) return "—";
+      return n.toFixed(4);
+    }
+
+    function explorerTx(hash){
+      return `https://amoy.polygonscan.com/tx/${hash}`;
+    }
+
+    function isSameAddr(a,b){
+      if(!a || !b) return false;
+      return String(a).toLowerCase() === String(b).toLowerCase();
+    }
+
+    // ================= HISTORY =================
+    function loadHistory(){
+      try{
+        const raw = localStorage.getItem(HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function saveHistory(items){
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
+      renderHistory();
+    }
+
+    function addHistory(item){
+      const items = loadHistory();
+      items.unshift(item);
+      saveHistory(items);
+    }
+
+    function clearHistory(){
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+      showToast("Historial limpiado.");
+    }
+
+    function renderHistory(){
+      const items = loadHistory();
+      const box = $("historyList");
+      box.innerHTML = "";
+      if(items.length === 0){
+        box.innerHTML = `<div class="small muted">Todavía no hay carreras registradas.</div>`;
+        return;
+      }
+
+      for(const it of items){
+        const div = document.createElement("div");
+        div.className = "item";
+        const time = new Date(it.time).toLocaleString();
+        div.innerHTML = `
+          <div class="l">
+            <div><b>Auto #${it.tokenId}</b> <span class="muted">•</span> <span class="muted">${time}</span></div>
+            <div class="small muted">Tx: <span class="link mono" data-tx="${it.txHash}">${short(it.txHash)}</span></div>
+            <div class="small muted">Carreras: ${it.racesLeft} • Retorno: ${fmtPol(it.returned)} / ${fmtPol(it.maxReturn)} POL</div>
+          </div>
+          <div class="r ${it.reward > 0 ? "ok" : "warn"}">
+            ${it.reward > 0 ? "+" : ""}${fmtPol(it.reward)} POL
+          </div>
+        `;
+        div.querySelector("[data-tx]").onclick = (e) => {
+          const h = e.target.getAttribute("data-tx");
+          window.open(explorerTx(h), "_blank");
+        };
+        box.appendChild(div);
+      }
+    }
+
+    // ================= SELECTOR (MIS AUTOS) =================
+    async function loadMyCars(){
+      // Lista basada en eventos CarMinted(owner=cuenta) + verificación owner actual con getCar()
+      if(!provider || !ro || !currentAccount){
+        $("carSelect").innerHTML = `<option value="">— Tus autos (conectá wallet) —</option>`;
+        myCars = [];
+        return;
+      }
+
+      setBusy(true, "Cargando autos");
+
+      try{
+        $("carSelect").innerHTML = `<option value="">⏳ Buscando tus autos…</option>`;
+
+        const iface = new ethers.Interface(ABI);
+        const topic0 = ethers.id("CarMinted(uint256,address,uint256,uint256)");
+        const ownerTopic = ethers.zeroPadValue(currentAccount, 32);
+
+        // Estrategia:
+        // 1) probamos desde "latest-200k" para acelerar
+        // 2) si no encontramos nada, probamos desde DEPLOY_BLOCK_HINT (o 0)
+        const latest = await provider.getBlockNumber();
+        const fastFrom = Math.max(Number(latest) - 200000, 0);
+
+        async function fetchLogs(fromBlock){
+          return await provider.getLogs({
+            address: CONTRACT,
+            fromBlock,
+            toBlock: "latest",
+            topics: [topic0, null, ownerTopic] // owner indexed en topic[2]
+          });
+        }
+
+        let logs = [];
+        try{
+          logs = await fetchLogs(fastFrom);
+        }catch{
+          // si el RPC se queja por rango, vamos directo al hint
+          logs = [];
+        }
+
+        if(logs.length === 0){
+          const from2 = (DEPLOY_BLOCK_HINT && DEPLOY_BLOCK_HINT > 0) ? DEPLOY_BLOCK_HINT : 0;
+          logs = await fetchLogs(from2);
+        }
+
+        // tokenIds desde eventos
+        const mintedIdsSet = new Set();
+        for(const lg of logs){
+          try{
+            const parsed = iface.parseLog(lg);
+            if(parsed && parsed.name === "CarMinted"){
+              mintedIdsSet.add(String(Number(parsed.args.tokenId)));
+            }
+          }catch{}
+        }
+
+        const mintedIds = Array.from(mintedIdsSet).map(x => Number(x)).filter(n => n>0);
+        mintedIds.sort((a,b)=>a-b);
+
+        // Verificación de owner actual con getCar()
+        const ownedNow = [];
+        for(const id of mintedIds){
+          try{
+            const r = await ro.getCar(id);
+            const owner = r[4];
+            if(isSameAddr(owner, currentAccount)){
+              ownedNow.push(id);
+            }
+          }catch{
+            // si no existe o falla, lo ignoramos
+          }
+        }
+
+        myCars = ownedNow;
+
+        // Render del select
+        if(myCars.length === 0){
+          $("carSelect").innerHTML = `<option value="">— No tenés autos minteados —</option>`;
+          showToast("No se encontraron autos para esta wallet.");
+          return;
+        }
+
+        const opts = [`<option value="">— Elegí un auto —</option>`];
+        for(const id of myCars){
+          opts.push(`<option value="${id}">Auto #${id}</option>`);
+        }
+        $("carSelect").innerHTML = opts.join("");
+
+        // Si el tokenInput ya es tuyo, lo preseleccionamos
+        const currentId = Number($("tokenInput").value);
+        if(myCars.includes(currentId)){
+          $("carSelect").value = String(currentId);
+        }else{
+          // Si no, preseleccionamos el último (o el primero)
+          $("carSelect").value = String(myCars[0]);
+          $("tokenInput").value = myCars[0];
+          await readCar();
+        }
+
+        showToast(`Autos cargados: ${myCars.length}`);
+      }catch(e){
+        $("carSelect").innerHTML = `<option value="">— Error cargando autos —</option>`;
+        showToast("Error buscando tus autos (RPC). Probá de nuevo.");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    async function onSelectCar(){
+      const v = $("carSelect").value;
+      if(!v) return;
+      $("tokenInput").value = Number(v);
+      await readCar();
+    }
+
+    function syncSelectWithTokenInput(){
+      const id = Number($("tokenInput").value);
+      if(!id || !myCars || myCars.length === 0) return;
+      if(myCars.includes(id)){
+        $("carSelect").value = String(id);
+      }
+    }
+
+    // ================= WEB3 =================
+    async function connect(){
+      if(!window.ethereum){
+        showToast("MetaMask no detectado en este navegador.");
+        return;
+      }
+      try{
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const accs = await window.ethereum.request({ method: "eth_requestAccounts" });
+        currentAccount = accs[0] || null;
+
+        signer = await provider.getSigner();
+        ro = new ethers.Contract(CONTRACT, ABI, provider);
+        rw = new ethers.Contract(CONTRACT, ABI, signer);
+
+        $("wallet").innerText = `wallet: ${short(currentAccount)}`;
+        $("contract").innerText = CONTRACT;
+
+        const net = await provider.getNetwork();
+        setNetworkBadge(net.chainId);
+        setConnectedUI(true);
+
+        window.ethereum.removeListener?.("accountsChanged", onAccountsChanged);
+        window.ethereum.removeListener?.("chainChanged", onChainChanged);
+        window.ethereum.on?.("accountsChanged", onAccountsChanged);
+        window.ethereum.on?.("chainChanged", onChainChanged);
+
+        showToast("Wallet conectada.");
+
+        // ✅ cargar autos del jugador
+        await loadMyCars();
+      }catch(e){
+        showToast("Conexión cancelada o falló.");
+      }
+    }
+
+    async function onAccountsChanged(accs){
+      currentAccount = accs[0] || null;
+      $("wallet").innerText = currentAccount ? `wallet: ${short(currentAccount)}` : "wallet: —";
+      setConnectedUI(!!currentAccount);
+      myCars = [];
+      showToast("Cuenta cambiada.");
+
+      if(currentAccount){
+        await loadMyCars();
+      }
+    }
+
+    async function onChainChanged(){
+      location.reload();
+    }
+
+    async function switchToAmoy(){
+      if(!window.ethereum){
+        showToast("MetaMask no detectado.");
+        return;
+      }
+      try{
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: AMOY_ID_HEX }]
+        });
+        showToast("Red cambiada a Amoy.");
+      }catch(err){
+        if(err && (err.code === 4902 || (""+err.message).toLowerCase().includes("unrecognized chain"))){
+          try{
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [AMOY_PARAMS]
+            });
+            showToast("Amoy agregada y seleccionada.");
+          }catch{
+            showToast("No se pudo agregar Amoy automáticamente.");
+          }
+        }else{
+          showToast("Cambio de red cancelado o falló.");
+        }
+      }
+    }
+
+    async function readCar(){
+      if(!ro){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      const id = Number($("tokenInput").value);
+      if(!id || id < 1){
+        showToast("TokenId inválido.");
+        return;
+      }
+      try{
+        const r = await ro.getCar(id);
+
+        const racesLeft = Number(r[0]);
+        const racesTotal = Number(r[1]);
+        const returned = Number(ethers.formatEther(r[2]));
+        const maxReturn = Number(ethers.formatEther(r[3]));
+        const owner = r[4];
+
+        $("tokenId").innerText = id;
+        $("races").innerText = racesLeft;
+        $("racesTotal").innerText = racesTotal;
+        $("returned").innerText = fmtPol(returned);
+        $("maxReturn").innerText = fmtPol(maxReturn);
+        $("owner").innerText = owner;
+
+        const retired = racesLeft <= 0 || returned >= maxReturn;
+        $("status").innerText = retired ? "RETIRADO" : "ACTIVO";
+        $("status").className = "status " + (retired ? "bad" : "ok");
+
+        // ✅ si ese token es tuyo, sincronizamos el select
+        syncSelectWithTokenInput();
+
+        showToast("Lectura OK.");
+      }catch{
+        showToast("Ese token no existe (¿minteaste?).");
+      }
+    }
+
+    async function mint(){
+      if(!rw){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      try{
+        setBusy(true, "Mint");
+        showToast("Firmá el mint en MetaMask…");
+        const tx = await rw.mintCar({ value: ethers.parseEther("0.01") });
+        showToast(`Mint enviado: ${short(tx.hash)}`);
+        const receipt = await tx.wait();
+
+        const iface = new ethers.Interface(ABI);
+        let tokenId = null;
+        for(const log of receipt.logs){
+          try{
+            const parsed = iface.parseLog(log);
+            if(parsed && parsed.name === "CarMinted"){
+              tokenId = Number(parsed.args.tokenId);
+              break;
+            }
+          }catch{}
+        }
+
+        if(tokenId){
+          $("tokenInput").value = tokenId;
+
+          // ✅ refrescamos selector y seleccionamos el nuevo auto
+          await loadMyCars();
+          $("carSelect").value = String(tokenId);
+
+          await readCar();
+          showToast(`Mint OK. Auto #${tokenId} creado.`);
+        }else{
+          showToast("Mint OK. Ahora leé tu auto.");
+          await loadMyCars();
+        }
+      }catch(e){
+        showToast("Mint cancelado o falló.");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    async function race(){
+      if(!rw || !ro){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      const id = Number($("tokenInput").value);
+      if(!id || id < 1){
+        showToast("TokenId inválido.");
+        return;
+      }
+
+      try{
+        setBusy(true, "Corriendo");
+        showToast("Firmá la carrera en MetaMask…");
+
+        const tx = await rw.race(id);
+        $("lastTx").innerHTML = `<span class="link mono" onclick="window.open('${explorerTx(tx.hash)}','_blank')">${short(tx.hash)}</span>`;
+        showToast(`Carrera enviada: ${short(tx.hash)}`);
+
+        const receipt = await tx.wait();
+
+        const iface = new ethers.Interface(ABI);
+        let reward = 0;
+        let racesLeft = null;
+        let returned = null;
+
+        for(const log of receipt.logs){
+          try{
+            const parsed = iface.parseLog(log);
+            if(parsed && parsed.name === "RaceResult"){
+              reward = Number(ethers.formatEther(parsed.args.reward));
+              racesLeft = Number(parsed.args.racesLeft);
+              returned = Number(ethers.formatEther(parsed.args.returnedAmount));
+              break;
+            }
+          }catch{}
+        }
+
+        $("lastReward").innerText = fmtPol(reward);
+
+        await readCar();
+
+        const maxReturn = Number($("maxReturn").innerText);
+        const item = {
+          time: Date.now(),
+          tokenId: id,
+          reward: reward,
+          txHash: tx.hash,
+          racesLeft: (racesLeft !== null) ? racesLeft : Number($("races").innerText),
+          returned: (returned !== null) ? returned : Number($("returned").innerText),
+          maxReturn: isFinite(maxReturn) ? maxReturn : Number($("maxReturn").innerText)
+        };
+        addHistory(item);
+
+        showToast(`Carrera confirmada. Premio: +${fmtPol(reward)} POL`);
+      }catch(e){
+        showToast("Race cancelado o falló. (Revisá gas y balance POL)");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    function copyAddress(){
+      const a = currentAccount;
+      if(!a){ showToast("No hay wallet conectada."); return; }
+      navigator.clipboard.writeText(a);
+      showToast("Wallet copiada al portapapeles.");
+    }
+
+    function openExplorer(){
+      const tokenId = $("tokenId").innerText;
+      if(tokenId && tokenId !== "—"){
+        window.open(`https://amoy.polygonscan.com/address/${CONTRACT}`, "_blank");
+      }else{
+        window.open(`https://amoy.polygonscan.com/address/${CONTRACT}`, "_blank");
+      }
+    }
+
+    // Init
+    $("contract").innerText = CONTRACT;
+    renderHistory();
+
+    // ✅ si el usuario edita manualmente el tokenInput, intentamos sincronizar el select
+    $("tokenInput").addEventListener("change", syncSelectWithTokenInput);
+    $("tokenInput").addEventListener("keyup", (e) => {
+      if(e.key === "Enter") readCar();
+    });
+  </script>
+</body>
+</html>
