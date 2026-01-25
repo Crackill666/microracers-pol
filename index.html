@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MicroRacers POL — On-Chain</title>
+  <style>
+    :root{
+      /* Fondo */
+      --bg: #0b0f14;
+
+      /* Tarjetas / paneles */
+      --card: #16221c;
+      --border: rgba(255,255,255,0.08);
+
+      /* Texto */
+      --text: #f3f4f6;
+      --muted: rgba(203,213,225,0.70);
+
+      /* Estados */
+      --ok: #22c55e;
+      --bad: #ef4444;
+      --warn: #facc15;
+
+      /* Botones */
+      --btn: rgba(255,255,255,0.06);
+      --btn2: linear-gradient(135deg,#22c55e,#3b82f6);
+
+      /* Extras */
+      --shadow: 0 12px 34px rgba(0,0,0,0.55);
+      --radius: 16px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(0,255,163,0.08), transparent 60%),
+        radial-gradient(1200px 800px at 80% 20%, rgba(0,140,255,0.08), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-family: Arial, sans-serif;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:18px;
+    }
+    .panel{
+      width:100%;
+      max-width: 760px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:14px;
+      margin-bottom: 12px;
+    }
+    .title{ font-size:28px; font-weight:800; letter-spacing: .2px; }
+    .subtitle{ font-size:12px; color:var(--muted); margin-top: 4px; line-height:1.35; }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,0.22);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 14px;
+      margin-top: 12px;
+    }
+    @media (max-width: 780px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+    .card{
+      background: rgba(0,255,163,0.07);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .row{ margin-top: 10px; font-size: 16px; }
+    .small{ font-size: 12px; color: var(--muted); word-break: break-word; margin-top: 6px; }
+    .status{
+      font-size: 12px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      margin-left: 10px;
+      display:inline-block;
+      transform: translateY(-2px);
+    }
+    .ok{ color: var(--ok); }
+    .bad{ color: var(--bad); }
+    .warn{ color: var(--warn); }
+
+    .controls{
+      background: rgba(255,255,255,0.03);
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .controls h3{
+      margin:0 0 10px 0;
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    .inputRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      margin-top: 10px;
+    }
+    .input{
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      outline:none;
+      font-size: 14px;
+    }
+    .btn{
+      width: 100%;
+      padding: 13px 14px;
+      font-size: 15px;
+      font-weight: 800;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      color: var(--text);
+      background: var(--btn);
+      transition: .18s ease;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .btn:active{ transform: translateY(0px); opacity:.95; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+    .btnPrimary{
+      background: var(--btn2);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .btnLine{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .btnLine3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    @media (max-width: 560px){
+      .btnLine, .btnLine3{ grid-template-columns: 1fr; }
+    }
+
+    /* Admin box */
+    .adminBox{
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+      display:none; /* se muestra solo si sos owner */
+    }
+    .adminTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .adminTitle{
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      color: rgba(231,237,245,0.92);
+    }
+
+    /* Toast */
+    .toastWrap{
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(740px, calc(100vw - 28px));
+      pointer-events:none;
+    }
+    .toast{
+      pointer-events:auto;
+      background: rgba(0,0,0,0.60);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 14px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      animation: pop .18s ease;
+    }
+    @keyframes pop{ from{ transform: translateY(8px); opacity:0; } to{ transform: translateY(0); opacity:1; } }
+    .toast .t{ font-size: 13px; color: var(--text); }
+    .toast .x{
+      background: rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      cursor:pointer;
+      font-weight: 800;
+    }
+
+    /* Loader */
+    .spinner{
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: rgba(255,255,255,0.85);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      display:inline-block;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* History */
+    .history{
+      margin-top: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .historyTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .history h3{ margin:0; font-size: 14px; color: var(--muted); font-weight: 800; }
+    .historyList{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height: 260px;
+      overflow:auto;
+      padding-right: 4px;
+    }
+    .item{
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+      border-radius: 12px;
+      padding: 10px 12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .item .l{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width: 0;
+    }
+    .item .r{
+      text-align:right;
+      white-space:nowrap;
+      font-weight: 800;
+    }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .link{
+      color: rgba(231,237,245,0.85);
+      text-decoration: underline;
+      cursor:pointer;
+    }
+    .muted{ color: var(--muted); }
+  
+    /* ================= OVERLAYS UX (Tx + Resultado) ================= */
+    .overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 9999;
+    }
+    .overlay.show{ display:flex; }
+
+    .modalCard{
+      width: min(820px, calc(100vw - 28px));
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: radial-gradient(1200px 420px at 20% 0%, rgba(0,255,163,0.14), rgba(10,14,20,0.90));
+      box-shadow: 0 30px 80px rgba(0,0,0,0.60);
+      overflow:hidden;
+    }
+    .modalHead{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      padding: 16px 16px 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .ttl{
+      font-size: 30px;
+      font-weight: 950;
+      letter-spacing: .2px;
+      line-height: 1.05;
+    }
+    .mini{
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .modalBody{ padding: 16px; }
+
+    /* ===== Overlay: transacción ===== */
+    .txRow{
+      display:flex;
+      gap: 14px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .bigSpinner{
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: 3px solid rgba(255,255,255,0.20);
+      border-top-color: rgba(255,255,255,0.88);
+      animation: spin .9s linear infinite;
+      flex:0 0 auto;
+    }
+    .txText .h{ font-size: 15px; font-weight: 900; }
+    .txText .p{ font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+    .txHash{
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(231,237,245,0.92);
+      word-break: break-word;
+    }
+    .stepPill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.18);
+    }
+    .stepDot{
+      width: 10px; height: 10px; border-radius: 99px;
+      background: rgba(255,255,255,0.30);
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+    #txOverlay.state-sign .stepDot{
+      background: rgba(250,204,21,0.9);
+      box-shadow: 0 0 18px rgba(250,204,21,0.35);
+    }
+    #txOverlay.state-wait .stepDot{
+      background: rgba(34,197,94,0.92);
+      box-shadow: 0 0 18px rgba(34,197,94,0.35);
+    }
+    .progressWrap{
+      margin-top: 12px;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      overflow:hidden;
+    }
+    .progressBar{
+      height: 100%;
+      width: 35%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(34,197,94,0.85), rgba(59,130,246,0.85));
+      animation: progressSlide 1.25s ease-in-out infinite;
+    }
+    @keyframes progressSlide{
+      0%{ transform: translateX(-60%); }
+      50%{ transform: translateX(60%); }
+      100%{ transform: translateX(-60%); }
+    }
+
+    /* ===== Overlay: resultado ===== */
+    #resultOverlay .modalCard{
+      background: radial-gradient(1200px 420px at 20% 0%, rgba(0,255,163,0.14), rgba(10,14,20,0.90));
+      border-color: rgba(255,255,255,0.14);
+    }
+    #resultOverlay.res-gold .modalCard{
+      background: radial-gradient(1200px 420px at 20% 0%, rgba(255,208,92,0.22), rgba(10,14,20,0.90));
+      border-color: rgba(255,208,92,0.22);
+    }
+    #resultOverlay.res-silver .modalCard{
+      background: radial-gradient(1200px 420px at 20% 0%, rgba(215,226,255,0.20), rgba(10,14,20,0.90));
+      border-color: rgba(215,226,255,0.20);
+    }
+    #resultOverlay.res-bronze .modalCard{
+      background: radial-gradient(1200px 420px at 20% 0%, rgba(211,144,91,0.20), rgba(10,14,20,0.90));
+      border-color: rgba(211,144,91,0.22);
+    }
+    .resultGrid{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .kv{
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.04);
+    }
+    .kv .k{
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .kv .v{
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    /* ===== Podio (CSS simple, corto, sin loop) ===== */
+    .podiumWrap{
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      align-items: end;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.10);
+    }
+    .podiumCol{
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      gap: 8px;
+      width:100%;
+    }
+    .podiumBar{
+      position: relative;
+      width: 100%;
+      height: 22px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.05);
+      transform-origin: bottom;
+      transform: scaleY(0.12);
+      opacity: 0.6;
+    }
+    .podiumLbl{
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .2px;
+    }
+
+    /* Auto + número (se muestra SOLO en el escalón ganador) */
+    .podiumCar{
+  position:absolute;
+  inset: 0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  opacity: 0;
+  pointer-events:none;
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.60));
+}
+    .podiumCar .carEmoji{
+  font-size: clamp(44px, 7vw, 84px);
+  line-height: 1;
+  transform: translateY(-2px);
+}
+    .podiumCar .carNum{
+  position:absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 14px;
+  font-weight: 950;
+  width: 28px;
+  height: 28px;
+  display:grid;
+  place-items:center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(0,0,0,0.30);
+  color: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+}
+    .podiumCol.win .podiumCar{
+  opacity: 1;
+  animation: carPop 420ms ease-out forwards;
+}
+    @keyframes carPop{
+  0%{ transform: scale(0.55); opacity: 0; }
+  100%{ transform: scale(1.00); opacity: 1; }
+}
+
+    /* Colores del podio (siguen el skin del overlay) */
+    #resultOverlay.res-gold .podiumCol:nth-child(2) .podiumBar{ background: rgba(255,208,92,0.20); border-color: rgba(255,208,92,0.26); }
+    #resultOverlay.res-gold .podiumCol:nth-child(1) .podiumBar{ background: rgba(215,226,255,0.12); border-color: rgba(215,226,255,0.18); }
+    #resultOverlay.res-gold .podiumCol:nth-child(3) .podiumBar{ background: rgba(211,144,91,0.14); border-color: rgba(211,144,91,0.20); }
+
+    #resultOverlay.res-silver .podiumCol:nth-child(2) .podiumBar{ background: rgba(215,226,255,0.18); border-color: rgba(215,226,255,0.22); }
+    #resultOverlay.res-silver .podiumCol:nth-child(1) .podiumBar{ background: rgba(255,208,92,0.12); border-color: rgba(255,208,92,0.18); }
+    #resultOverlay.res-silver .podiumCol:nth-child(3) .podiumBar{ background: rgba(211,144,91,0.14); border-color: rgba(211,144,91,0.20); }
+
+    #resultOverlay.res-bronze .podiumCol:nth-child(2) .podiumBar{ background: rgba(211,144,91,0.18); border-color: rgba(211,144,91,0.22); }
+    #resultOverlay.res-bronze .podiumCol:nth-child(1) .podiumBar{ background: rgba(215,226,255,0.12); border-color: rgba(215,226,255,0.18); }
+    #resultOverlay.res-bronze .podiumCol:nth-child(3) .podiumBar{ background: rgba(255,208,92,0.12); border-color: rgba(255,208,92,0.18); }
+
+    /* Animación: un solo ciclo (se reinicia agregando/removiendo clase) */
+    .podiumRun .podiumCol:nth-child(1) .podiumBar{ animation: rise2 420ms ease-out forwards; }
+    .podiumRun .podiumCol:nth-child(2) .podiumBar{ animation: rise1 520ms ease-out forwards; }
+    .podiumRun .podiumCol:nth-child(3) .podiumBar{ animation: rise3 360ms ease-out forwards; }
+
+    @keyframes rise1{ to{ transform: scaleY(1); opacity: 1; height: 86px; } } /* 1° (centro) */
+    @keyframes rise2{ to{ transform: scaleY(1); opacity: .95; height: 64px; } } /* 2° (izq) */
+    @keyframes rise3{ to{ transform: scaleY(1); opacity: .92; height: 48px; } } /* 3° (der) */
+
+    .modalActions{
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="panel">
+    <div class="top">
+      <div>
+        <div class="title">MicroRacers POL</div>
+        <div class="subtitle">
+          Juego on-chain en <b>Polygon Amoy</b> • ROI tope +20% • Carreras limitadas<br/>
+          Contrato V3: <span id="contract" class="mono"></span>
+        </div>
+      </div>
+      <div class="pill">
+        <span id="netDot">●</span>
+        <span id="network">—</span>
+        <span class="muted">|</span>
+        <span id="wallet">wallet: —</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="card">
+        <div class="row">
+          🚗 Auto #<span id="tokenId">—</span>
+          <span id="status" class="status">—</span>
+        </div>
+
+        <div class="row">Carreras: <b id="races">—</b> / <span id="racesTotal">—</span></div>
+        <div class="row">Retorno: <b id="returned">—</b> / <span id="maxReturn">—</span> POL</div>
+
+        <div class="small">Owner: <span id="owner" class="mono">—</span></div>
+        <div class="small">Última recompensa: <b id="lastReward">—</b> POL</div>
+        <div class="small">Última tx: <span id="lastTx" class="mono">—</span></div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="controls">
+        <h3>Acciones</h3>
+
+        <button id="btnConnect" class="btn" onclick="connect()">🔌 Conectar MetaMask</button>
+
+        <div class="btnLine">
+          <button id="btnSwitch" class="btn" onclick="switchToAmoy()">🧭 Cambiar a Amoy</button>
+          <button id="btnRead" class="btn btnPrimary" onclick="readCar()">📥 Leer Auto</button>
+        </div>
+
+        <!-- ✅ SELECTOR DE AUTOS DEL JUGADOR -->
+        <div class="inputRow">
+          <select id="carSelect" class="input" onchange="onSelectCar()" disabled>
+            <option value="">— Tus autos (conectá wallet) —</option>
+          </select>
+        </div>
+        <div class="small" id="carSelectHint" style="margin-top:6px;">
+          Tip: el desplegable se arma leyendo eventos <b>CarMinted</b> y verificando el owner actual.
+        </div>
+
+        <div class="inputRow">
+          <input id="tokenInput" class="input" type="number" min="1" step="1" value="1" />
+        </div>
+
+        <div class="btnLine">
+          <button id="btnMint" class="btn" onclick="mint()">🧾 Mint (0.01 POL)</button>
+          <button id="btnRace" class="btn btnPrimary" onclick="race()">🏁 CORRER</button>
+        </div>
+
+        <!-- ✅ ADMIN (solo owner) -->
+        <div id="adminBox" class="adminBox">
+          <div class="adminTop">
+            <div class="adminTitle">👑 Admin (Owner)</div>
+            <div class="small muted">Pool: <b id="poolPol">0.0000</b> POL</div>
+          </div>
+
+          <div class="small">Owner del contrato: <span id="ownerAddr" class="mono">—</span></div>
+
+          <div class="inputRow">
+            <input id="withdrawAmount" class="input" type="number" min="0" step="0.0001" placeholder="Monto a retirar (POL)" />
+          </div>
+
+          <div class="btnLine">
+            <button id="btnRefreshPool" class="btn" onclick="refreshPool()">🔄 Actualizar pool</button>
+            <button id="btnWithdraw" class="btn btnPrimary" onclick="withdraw()">⬇️ Retirar</button>
+          </div>
+
+          <div class="small muted" style="margin-top:8px;">
+            Nota: el retiro es <b>parcial</b>. Se envía a tu wallet conectada (owner).
+          </div>
+        </div>
+
+        <div class="btnLine3">
+          <button class="btn" onclick="clearHistory()">🧹 Limpiar historial</button>
+          <button class="btn" onclick="copyAddress()">📋 Copiar wallet</button>
+          <button class="btn" onclick="openExplorer()">🔎 Ver en Explorer</button>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Consejo dev: en testnet, si hay picos de gas, subí <b>priority fee</b> (ej. 50 gwei) y <b>max fee</b> (200 gwei).
+        </div>
+      </div>
+    </div>
+
+    <div class="history">
+      <div class="historyTop">
+        <h3>Historial (últimas 30)</h3>
+        <div class="small">Se guarda en tu navegador (localStorage).</div>
+      </div>
+      <div id="historyList" class="historyList"></div>
+    </div>
+  </div>
+
+  <div class="toastWrap" id="toastWrap" style="display:none;">
+    <div class="toast">
+      <div class="t" id="toastText">—</div>
+      <button class="x" onclick="hideToast()">OK</button>
+    </div>
+  </div>
+
+  <!-- ================= OVERLAY: Transacción (animación hasta tx.wait) ================= -->
+  <div class="overlay" id="txOverlay" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Transacción en progreso">
+      <div class="modalHead">
+        <div>
+          <div class="ttl" id="txTitle">Transacción</div>
+          <div class="mini stepPill"><span class="stepDot"></span><span id="txStepText">—</span></div>
+        </div>
+        <div class="mini" id="txSub">—</div>
+      </div>
+
+      <div class="modalBody">
+        <div class="txRow">
+          <div class="bigSpinner" aria-hidden="true"></div>
+          <div class="txText">
+            <div class="h" id="txMain">MicroRacers POL</div>
+            <div class="p" id="txHint">—</div>
+            <div class="txHash" id="txHash"></div>
+          </div>
+        </div>
+
+        <div class="progressWrap" aria-hidden="true">
+          <div class="progressBar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= OVERLAY: Resultado (podio) ================= -->
+  <div class="overlay" id="resultOverlay" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Resultado de carrera">
+      <div class="modalHead">
+        <div>
+          <div class="ttl" id="resPlace">—</div>
+          <div class="mini">Auto <span class="mono" id="resTokenId">—</span> · Tx <span class="link mono" id="resTx" onclick="openResTx()" style="cursor:pointer">—</span></div>
+        </div>
+        <button class="btn" onclick="closeResult()">Cerrar</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="resultGrid">
+          <div class="kv">
+            <div class="k">Recompensa</div>
+            <div class="v" id="resReward">—</div>
+          </div>
+          <div class="kv">
+            <div class="k">Carreras restantes</div>
+            <div class="v" id="resRacesLeft">—</div>
+          </div>
+          <div class="kv">
+            <div class="k">Retorno acumulado</div>
+            <div class="v" id="resReturned">—</div>
+          </div>
+          <div class="kv">
+            <div class="k">Máx. retorno</div>
+            <div class="v" id="resMaxReturn">—</div>
+          </div>
+        </div>
+
+        <div class="podiumWrap" id="podium">
+          <!-- 2° (izquierda) -->
+          <div class="podiumCol" data-place="2">
+            <div class="podiumBar">
+              <div class="podiumCar" aria-hidden="true">
+                <span class="carEmoji">🏎️</span><span class="carNum">2</span>
+              </div>
+            </div>
+            <div class="podiumLbl">2°</div>
+          </div>
+
+          <!-- 1° (centro) -->
+          <div class="podiumCol" data-place="1">
+            <div class="podiumBar">
+              <div class="podiumCar" aria-hidden="true">
+                <span class="carEmoji">🏎️</span><span class="carNum">1</span>
+              </div>
+            </div>
+            <div class="podiumLbl">1°</div>
+          </div>
+
+          <!-- 3° (derecha) -->
+          <div class="podiumCol" data-place="3">
+            <div class="podiumBar">
+              <div class="podiumCar" aria-hidden="true">
+                <span class="carEmoji">🏎️</span><span class="carNum">3</span>
+              </div>
+            </div>
+            <div class="podiumLbl">3°</div>
+          </div>
+        </div>
+
+        <div class="modalActions">
+          <button class="btn btnPrimary" onclick="closeResult()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script>
+    // ================= CONFIG =================
+    // ✅ V3 (nuevo)
+    const CONTRACT = "0x4A5C1557639F818c4947BEdef79Fd7E33E67553d";
+    const AMOY_ID_DEC = 80002;
+    const AMOY_ID_HEX = "0x13882"; // 80002
+
+    // Si sabés el block de deploy del contrato, ponelo acá (opcional).
+    const DEPLOY_BLOCK_HINT = 0;
+
+    const AMOY_PARAMS = {
+      chainId: AMOY_ID_HEX,
+      chainName: "Polygon Amoy",
+      nativeCurrency: { name: "POL", symbol: "POL", decimals: 18 },
+      rpcUrls: ["https://rpc-amoy.polygon.technology/"],
+      blockExplorerUrls: ["https://amoy.polygonscan.com/"]
+    };
+
+    // ✅ ABI V3 (agregamos owner(), poolBalance(), withdrawPool(), OwnerWithdraw)
+    const ABI = [
+      "function mintCar() external payable",
+      "function race(uint256 tokenId) external",
+      "function getCar(uint256 tokenId) external view returns (uint256,uint256,uint256,uint256,address)",
+      "function poolBalance() external view returns (uint256)",
+      "function owner() external view returns (address)",
+      "function withdrawPool(address payable to, uint256 amount) external",
+      "event RaceResult(uint256 indexed tokenId, address indexed player, uint256 reward, uint256 racesLeft, uint256 returnedAmount)",
+      "event CarMinted(uint256 indexed tokenId, address indexed owner, uint256 price, uint256 maxReturn)",
+      "event OwnerWithdraw(address indexed to, uint256 amount)"
+    ];
+
+    // ================= STATE =================
+    let provider, signer, ro, rw;
+    let currentAccount = null;
+    let busy = false;
+
+    let contractOwner = null; // owner() del contrato
+    let myCars = [];
+
+    const HISTORY_KEY = "microracers_history_v1";
+    const HISTORY_MAX = 30;
+
+    // ================= HELPERS =================
+    const $ = id => document.getElementById(id);
+    const short = a => a ? a.slice(0,6)+"..."+a.slice(-4) : "—";
+
+    
+
+    // ================= OVERLAYS UX =================
+    let _lastResultTxHash = null;
+
+    function openTxOverlay(){
+      const o = $("txOverlay");
+      if(!o) return;
+      o.classList.add("show");
+      o.setAttribute("aria-hidden","false");
+    }
+
+    function closeTxOverlay(){
+      const o = $("txOverlay");
+      if(!o) return;
+      o.classList.remove("show","state-sign","state-wait");
+      o.setAttribute("aria-hidden","true");
+      $("txHash").innerHTML = "";
+    }
+
+    // state: "sign" | "wait"
+    function setTxState(state, tokenId=null){
+      const o = $("txOverlay");
+      if(!o) return;
+
+      o.classList.remove("state-sign","state-wait");
+      if(state === "sign"){
+        o.classList.add("state-sign");
+        $("txTitle").innerText = "CORRER";
+        $("txStepText").innerText = "Esperando firma en wallet";
+        $("txSub").innerText = tokenId ? `Auto #${tokenId}` : "—";
+        $("txHint").innerText = "Confirmá la transacción en MetaMask para iniciar la carrera.";
+        $("txMain").innerText = "MicroRacers POL";
+      }else{
+        o.classList.add("state-wait");
+        $("txTitle").innerText = "Carrera en progreso";
+        $("txStepText").innerText = "Confirmando en la red";
+        $("txSub").innerText = tokenId ? `Auto #${tokenId}` : "—";
+        $("txHint").innerText = "La carrera se está confirmando on-chain. Esto puede tardar unos segundos.";
+        $("txMain").innerText = "MicroRacers POL";
+      }
+    }
+
+    function setTxHash(hash){
+      if(!hash) return;
+      $("txHash").innerHTML = `Tx: <span class="link mono" onclick="window.open('${explorerTx(hash)}','_blank')">${hash}</span>`;
+    }
+
+    function closeResult(){
+      const wrap = $("resultOverlay");
+      if(!wrap) return;
+      wrap.classList.remove("show","res-gold","res-silver","res-bronze");
+      wrap.setAttribute("aria-hidden","true");
+    }
+
+    function openResTx(){
+      if(_lastResultTxHash){
+        window.open(explorerTx(_lastResultTxHash), "_blank");
+      }
+    }
+
+    // Mapea reward -> puesto, sin tocar la fuente de verdad on-chain.
+    // 1° = mayor reward, 2° = medio, 3° = menor (entre 3 niveles).
+    function rewardToPlace(reward){
+      const r = Number(reward);
+      if(!isFinite(r) || r <= 0) return 3;
+
+      // 1) Intento: inferir tiers desde historial (más robusto si cambian los valores en contrato)
+      const items = loadHistory();
+      const uniq = new Set();
+      for(const it of items){
+        const v = Number(it.reward);
+        if(isFinite(v) && v > 0) uniq.add(v.toFixed(18));
+      }
+      uniq.add(r.toFixed(18));
+
+      let tiers = Array.from(uniq).map(x => Number(x)).filter(v => isFinite(v) && v > 0);
+      tiers.sort((a,b)=>b-a);
+      tiers = tiers.slice(0,3);
+
+      // 2) Fallback si todavía no hay 3 valores en historial (valores típicos; podés ajustarlos si tu contrato usa otros)
+      if(tiers.length < 3){
+        const fallback = [0.0008, 0.0006, 0.0004];
+        for(const v of fallback){
+          if(!tiers.some(t => Math.abs(t - v) < 1e-12)) tiers.push(v);
+        }
+        tiers = tiers.slice(0,3).sort((a,b)=>b-a);
+      }
+
+      // Elegimos el tier más cercano (por si hay diferencias de redondeo)
+      let bestIdx = 0;
+      let bestDiff = Infinity;
+      for(let i=0;i<tiers.length;i++){
+        const diff = Math.abs(tiers[i] - r);
+        if(diff < bestDiff){
+          bestDiff = diff;
+          bestIdx = i;
+        }
+      }
+      // tiers[0] = mayor => 1°, tiers[1] => 2°, tiers[2] => 3°
+      return bestIdx === 0 ? 1 : (bestIdx === 1 ? 2 : 3);
+    }
+
+    function openResultOverlay({place, tokenId, reward, racesLeft, returned, maxReturn, txHash}){
+      const wrap = $("resultOverlay");
+      if(!wrap) return;
+
+      _lastResultTxHash = txHash || null;
+
+      // Skin por puesto
+      wrap.classList.remove("res-gold","res-silver","res-bronze");
+      wrap.classList.add("show");
+      wrap.setAttribute("aria-hidden","false");
+
+      let title = "PUESTO";
+      if(place === 1){
+        wrap.classList.add("res-gold");
+        title = "🥇 1° PUESTO";
+      }else if(place === 2){
+        wrap.classList.add("res-silver");
+        title = "🥈 2° PUESTO";
+      }else{
+        wrap.classList.add("res-bronze");
+        title = "🥉 3° PUESTO";
+      }
+
+      $("resPlace").innerText = title;
+      $("resTokenId").innerText = String(tokenId ?? "—");
+      $("resTx").innerText = txHash ? short(txHash) : "—";
+      $("resReward").innerText = `${fmtPol(reward)} POL`;
+      $("resRacesLeft").innerText = String(racesLeft ?? "—");
+      $("resReturned").innerText = `${fmtPol(returned)} POL`;
+      $("resMaxReturn").innerText = `${fmtPol(maxReturn)} POL`;
+
+      // Podio: animación corta + auto en el escalón ganador
+      const podium = $("podium");
+      if(podium){
+        podium.classList.remove("podiumRun");
+        // limpiar wins
+        const cols = podium.querySelectorAll(".podiumCol");
+        cols.forEach(c => c.classList.remove("win"));
+        // marcar escalón ganador
+        const winCol = podium.querySelector(`.podiumCol[data-place="${place}"]`);
+        if(winCol) winCol.classList.add("win");
+
+        // reiniciar animación (sin loop)
+        void podium.offsetWidth; // reflow
+        podium.classList.add("podiumRun");
+      }
+    }
+function showToast(text){
+      $("toastText").innerText = text;
+      $("toastWrap").style.display = "block";
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(hideToast, 3500);
+    }
+    function hideToast(){
+      $("toastWrap").style.display = "none";
+    }
+
+    function setBusy(on, label=null){
+      busy = on;
+
+      const ids = [
+        "btnConnect","btnSwitch","btnRead","btnMint","btnRace",
+        "carSelect","tokenInput",
+        "btnWithdraw","btnRefreshPool","withdrawAmount"
+      ];
+
+      ids.forEach(id => {
+        const el = $(id);
+        if(!el) return;
+
+        // admin controls solo si soy owner y hay wallet
+        if(["btnWithdraw","btnRefreshPool","withdrawAmount"].includes(id)){
+          const isOwnerNow = currentAccount && contractOwner && isSameAddr(currentAccount, contractOwner);
+          el.disabled = on || !isOwnerNow;
+          return;
+        }
+
+        // select: solo habilita si hay cuenta
+        if(id === "carSelect"){
+          el.disabled = on || !currentAccount;
+          return;
+        }
+
+        el.disabled = on;
+      });
+
+      if(on){
+        $("btnRace").innerHTML = `${label ? label : "Procesando"} <span class="spinner"></span>`;
+      }else{
+        $("btnRace").innerHTML = "🏁 CORRER";
+      }
+    }
+
+    function setNetworkBadge(chainId){
+      const isAmoy = Number(chainId) === AMOY_ID_DEC;
+      $("network").innerText = isAmoy ? "Amoy" : `Chain ${chainId}`;
+      $("netDot").style.color = isAmoy ? "#4cffb2" : "#ffd66b";
+    }
+
+    function setConnectedUI(connected){
+      $("btnConnect").innerText = connected ? "✅ Wallet conectada" : "🔌 Conectar MetaMask";
+      $("carSelect").disabled = !connected || busy;
+      if(!connected){
+        $("carSelect").innerHTML = `<option value="">— Tus autos (conectá wallet) —</option>`;
+        $("adminBox").style.display = "none";
+        $("ownerAddr").innerText = "—";
+        $("poolPol").innerText = "0.0000";
+      }
+    }
+
+    function fmtPol(x){
+      const n = Number(x);
+      if (!isFinite(n)) return "—";
+      return n.toFixed(4);
+    }
+
+    function explorerTx(hash){
+      return `https://amoy.polygonscan.com/tx/${hash}`;
+    }
+
+    function isSameAddr(a,b){
+      if(!a || !b) return false;
+      return String(a).toLowerCase() === String(b).toLowerCase();
+    }
+
+    // ================= HISTORY =================
+    function loadHistory(){
+      try{
+        const raw = localStorage.getItem(HISTORY_KEY);
+        return raw ? JSON.parse(raw) : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function saveHistory(items){
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
+      renderHistory();
+    }
+
+    function addHistory(item){
+      const items = loadHistory();
+      items.unshift(item);
+      saveHistory(items);
+    }
+
+    function clearHistory(){
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistory();
+      showToast("Historial limpiado.");
+    }
+
+    function renderHistory(){
+      const items = loadHistory();
+      const box = $("historyList");
+      box.innerHTML = "";
+      if(items.length === 0){
+        box.innerHTML = `<div class="small muted">Todavía no hay carreras registradas.</div>`;
+        return;
+      }
+
+      for(const it of items){
+        const div = document.createElement("div");
+        div.className = "item";
+        const time = new Date(it.time).toLocaleString();
+        div.innerHTML = `
+          <div class="l">
+            <div><b>Auto #${it.tokenId}</b> <span class="muted">•</span> <span class="muted">${time}</span></div>
+            <div class="small muted">Tx: <span class="link mono" data-tx="${it.txHash}">${short(it.txHash)}</span></div>
+            <div class="small muted">Carreras: ${it.racesLeft} • Retorno: ${fmtPol(it.returned)} / ${fmtPol(it.maxReturn)} POL</div>
+          </div>
+          <div class="r ${it.reward > 0 ? "ok" : "warn"}">
+            ${it.reward > 0 ? "+" : ""}${fmtPol(it.reward)} POL
+          </div>
+        `;
+        div.querySelector("[data-tx]").onclick = (e) => {
+          const h = e.target.getAttribute("data-tx");
+          window.open(explorerTx(h), "_blank");
+        };
+        box.appendChild(div);
+      }
+    }
+
+    // ================= ADMIN =================
+    async function loadOwnerAndAdminUI(){
+      if(!ro || !currentAccount) return;
+
+      try{
+        contractOwner = await ro.owner();
+        $("ownerAddr").innerText = contractOwner || "—";
+
+        const isOwnerNow = isSameAddr(currentAccount, contractOwner);
+        $("adminBox").style.display = isOwnerNow ? "block" : "none";
+
+        if(isOwnerNow){
+          await refreshPool();
+        }
+      }catch{
+        contractOwner = null;
+        $("adminBox").style.display = "none";
+      }
+    }
+
+    async function refreshPool(){
+      if(!ro){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      try{
+        const balWei = await ro.poolBalance();
+        const balPol = Number(ethers.formatEther(balWei));
+        $("poolPol").innerText = fmtPol(balPol);
+      }catch{
+        showToast("No se pudo leer poolBalance().");
+      }
+    }
+
+    async function withdraw(){
+      if(!rw || !currentAccount || !contractOwner){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      if(!isSameAddr(currentAccount, contractOwner)){
+        showToast("Solo el owner puede retirar.");
+        return;
+      }
+
+      const amountPolStr = String($("withdrawAmount").value || "").trim();
+      const amountPol = Number(amountPolStr);
+
+      if(!amountPolStr || !isFinite(amountPol) || amountPol <= 0){
+        showToast("Monto inválido.");
+        return;
+      }
+
+      try{
+        setBusy(true, "Retirando");
+        showToast("Confirmá el retiro en MetaMask…");
+
+        const amountWei = ethers.parseEther(amountPolStr);
+        const tx = await rw.withdrawPool(currentAccount, amountWei);
+
+        showToast(`Retiro enviado: ${short(tx.hash)}`);
+        await tx.wait();
+
+        showToast("Retiro confirmado.");
+        $("withdrawAmount").value = "";
+        await refreshPool();
+      }catch(e){
+        showToast("Retiro cancelado o falló. (¿Fondos insuficientes?)");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    // ================= SELECTOR (MIS AUTOS) =================
+    async function loadMyCars(){
+      if(!provider || !ro || !currentAccount){
+        $("carSelect").innerHTML = `<option value="">— Tus autos (conectá wallet) —</option>`;
+        myCars = [];
+        return;
+      }
+
+      setBusy(true, "Cargando autos");
+
+      try{
+        $("carSelect").innerHTML = `<option value="">⏳ Buscando tus autos…</option>`;
+
+        const iface = new ethers.Interface(ABI);
+        const topic0 = ethers.id("CarMinted(uint256,address,uint256,uint256)");
+        const ownerTopic = ethers.zeroPadValue(currentAccount, 32);
+
+        const latest = await provider.getBlockNumber();
+        const fastFrom = Math.max(Number(latest) - 200000, 0);
+
+        async function fetchLogs(fromBlock){
+          return await provider.getLogs({
+            address: CONTRACT,
+            fromBlock,
+            toBlock: "latest",
+            topics: [topic0, null, ownerTopic]
+          });
+        }
+
+        let logs = [];
+        try{
+          logs = await fetchLogs(fastFrom);
+        }catch{
+          logs = [];
+        }
+
+        if(logs.length === 0){
+          const from2 = (DEPLOY_BLOCK_HINT && DEPLOY_BLOCK_HINT > 0) ? DEPLOY_BLOCK_HINT : 0;
+          logs = await fetchLogs(from2);
+        }
+
+        const mintedIdsSet = new Set();
+        for(const lg of logs){
+          try{
+            const parsed = iface.parseLog(lg);
+            if(parsed && parsed.name === "CarMinted"){
+              mintedIdsSet.add(String(Number(parsed.args.tokenId)));
+            }
+          }catch{}
+        }
+
+        const mintedIds = Array.from(mintedIdsSet).map(x => Number(x)).filter(n => n>0);
+        mintedIds.sort((a,b)=>a-b);
+
+        const ownedNow = [];
+        for(const id of mintedIds){
+          try{
+            const r = await ro.getCar(id);
+            const owner = r[4];
+            if(isSameAddr(owner, currentAccount)){
+              ownedNow.push(id);
+            }
+          }catch{}
+        }
+
+        myCars = ownedNow;
+
+        if(myCars.length === 0){
+          $("carSelect").innerHTML = `<option value="">— No tenés autos minteados —</option>`;
+          showToast("No se encontraron autos para esta wallet.");
+          return;
+        }
+
+        const opts = [`<option value="">— Elegí un auto —</option>`];
+        for(const id of myCars){
+          opts.push(`<option value="${id}">Auto #${id}</option>`);
+        }
+        $("carSelect").innerHTML = opts.join("");
+
+        const currentId = Number($("tokenInput").value);
+        if(myCars.includes(currentId)){
+          $("carSelect").value = String(currentId);
+        }else{
+          $("carSelect").value = String(myCars[0]);
+          $("tokenInput").value = myCars[0];
+          await readCar();
+        }
+
+        showToast(`Autos cargados: ${myCars.length}`);
+      }catch(e){
+        $("carSelect").innerHTML = `<option value="">— Error cargando autos —</option>`;
+        showToast("Error buscando tus autos (RPC). Probá de nuevo.");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    async function onSelectCar(){
+      const v = $("carSelect").value;
+      if(!v) return;
+      $("tokenInput").value = Number(v);
+      await readCar();
+    }
+
+    function syncSelectWithTokenInput(){
+      const id = Number($("tokenInput").value);
+      if(!id || !myCars || myCars.length === 0) return;
+      if(myCars.includes(id)){
+        $("carSelect").value = String(id);
+      }
+    }
+
+    // ================= WEB3 =================
+    async function connect(){
+      if(!window.ethereum){
+        showToast("MetaMask no detectado en este navegador.");
+        return;
+      }
+      try{
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const accs = await window.ethereum.request({ method: "eth_requestAccounts" });
+        currentAccount = accs[0] || null;
+
+        signer = await provider.getSigner();
+        ro = new ethers.Contract(CONTRACT, ABI, provider);
+        rw = new ethers.Contract(CONTRACT, ABI, signer);
+
+        $("wallet").innerText = `wallet: ${short(currentAccount)}`;
+        $("contract").innerText = CONTRACT;
+
+        const net = await provider.getNetwork();
+        setNetworkBadge(net.chainId);
+        setConnectedUI(true);
+
+        window.ethereum.removeListener?.("accountsChanged", onAccountsChanged);
+        window.ethereum.removeListener?.("chainChanged", onChainChanged);
+        window.ethereum.on?.("accountsChanged", onAccountsChanged);
+        window.ethereum.on?.("chainChanged", onChainChanged);
+
+        showToast("Wallet conectada.");
+
+        // ✅ Admin (owner + pool)
+        await loadOwnerAndAdminUI();
+
+        // ✅ cargar autos del jugador
+        await loadMyCars();
+      }catch(e){
+        showToast("Conexión cancelada o falló.");
+      }
+    }
+
+    async function onAccountsChanged(accs){
+      currentAccount = accs[0] || null;
+      $("wallet").innerText = currentAccount ? `wallet: ${short(currentAccount)}` : "wallet: —";
+      setConnectedUI(!!currentAccount);
+      myCars = [];
+      contractOwner = null;
+
+      showToast("Cuenta cambiada.");
+
+      if(currentAccount){
+        // re-instanciar signer/rw (por si cambió cuenta)
+        signer = await provider.getSigner();
+        rw = new ethers.Contract(CONTRACT, ABI, signer);
+
+        await loadOwnerAndAdminUI();
+        await loadMyCars();
+      }
+    }
+
+    async function onChainChanged(){
+      location.reload();
+    }
+
+    async function switchToAmoy(){
+      if(!window.ethereum){
+        showToast("MetaMask no detectado.");
+        return;
+      }
+      try{
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: AMOY_ID_HEX }]
+        });
+        showToast("Red cambiada a Amoy.");
+      }catch(err){
+        if(err && (err.code === 4902 || (""+err.message).toLowerCase().includes("unrecognized chain"))){
+          try{
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [AMOY_PARAMS]
+            });
+            showToast("Amoy agregada y seleccionada.");
+          }catch{
+            showToast("No se pudo agregar Amoy automáticamente.");
+          }
+        }else{
+          showToast("Cambio de red cancelado o falló.");
+        }
+      }
+    }
+
+    async function readCar(){
+      if(!ro){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      const id = Number($("tokenInput").value);
+      if(!id || id < 1){
+        showToast("TokenId inválido.");
+        return;
+      }
+      try{
+        const r = await ro.getCar(id);
+
+        const racesLeft = Number(r[0]);
+        const racesTotal = Number(r[1]);
+        const returned = Number(ethers.formatEther(r[2]));
+        const maxReturn = Number(ethers.formatEther(r[3]));
+        const owner = r[4];
+
+        $("tokenId").innerText = id;
+        $("races").innerText = racesLeft;
+        $("racesTotal").innerText = racesTotal;
+        $("returned").innerText = fmtPol(returned);
+        $("maxReturn").innerText = fmtPol(maxReturn);
+        $("owner").innerText = owner;
+
+        const retired = racesLeft <= 0 || returned >= maxReturn;
+        $("status").innerText = retired ? "RETIRADO" : "ACTIVO";
+        $("status").className = "status " + (retired ? "bad" : "ok");
+
+        syncSelectWithTokenInput();
+
+        showToast("Lectura OK.");
+      }catch{
+        showToast("Ese token no existe (¿minteaste?).");
+      }
+    }
+
+    async function mint(){
+      if(!rw){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      try{
+        setBusy(true, "Mint");
+        showToast("Firmá el mint en MetaMask…");
+        const tx = await rw.mintCar({ value: ethers.parseEther("0.01") });
+        showToast(`Mint enviado: ${short(tx.hash)}`);
+        const receipt = await tx.wait();
+
+        const iface = new ethers.Interface(ABI);
+        let tokenId = null;
+        for(const log of receipt.logs){
+          try{
+            const parsed = iface.parseLog(log);
+            if(parsed && parsed.name === "CarMinted"){
+              tokenId = Number(parsed.args.tokenId);
+              break;
+            }
+          }catch{}
+        }
+
+        // actualizar pool en admin si sos owner (mint aumenta balance del contrato)
+        if(currentAccount && contractOwner && isSameAddr(currentAccount, contractOwner)){
+          await refreshPool();
+        }
+
+        if(tokenId){
+          $("tokenInput").value = tokenId;
+          await loadMyCars();
+          $("carSelect").value = String(tokenId);
+          await readCar();
+          showToast(`Mint OK. Auto #${tokenId} creado.`);
+        }else{
+          showToast("Mint OK. Ahora leé tu auto.");
+          await loadMyCars();
+        }
+      }catch(e){
+        showToast("Mint cancelado o falló.");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+    
+    async function race(){
+      if(!rw || !ro){
+        showToast("Primero conectá MetaMask.");
+        return;
+      }
+      const id = Number($("tokenInput").value);
+      if(!id || id < 1){
+        showToast("TokenId inválido.");
+        return;
+      }
+
+      try{
+        setBusy(true, "Corriendo");
+
+        // 1) Overlay: esperando firma
+        openTxOverlay();
+        setTxState("sign", id);
+
+        const tx = await rw.race(id);
+
+        // 2) Overlay: confirmando en red (hasta tx.wait())
+        setTxState("wait", id);
+        setTxHash(tx.hash);
+
+        $("lastTx").innerHTML = `<span class="link mono" onclick="window.open('${explorerTx(tx.hash)}','_blank')">${short(tx.hash)}</span>`;
+        showToast(`Carrera enviada: ${short(tx.hash)}`);
+
+        const receipt = await tx.wait();
+
+        // Cerramos overlay de tx cuando ya está minada
+        closeTxOverlay();
+
+        // Parseo de evento RaceResult (fuente de verdad del reward)
+        const iface = new ethers.Interface(ABI);
+        let reward = 0;
+        let racesLeft = null;
+        let returned = null;
+
+        for(const log of receipt.logs){
+          try{
+            const parsed = iface.parseLog(log);
+            if(parsed && parsed.name === "RaceResult"){
+              reward = Number(ethers.formatEther(parsed.args.reward));
+              racesLeft = Number(parsed.args.racesLeft);
+              returned = Number(ethers.formatEther(parsed.args.returnedAmount));
+              break;
+            }
+          }catch{}
+        }
+
+        $("lastReward").innerText = fmtPol(reward);
+
+        // Refrescamos datos on-chain del auto (no cambia nada del contrato)
+        await readCar();
+
+        // Si sos owner, el pool bajó (porque pagó reward)
+        if(currentAccount && contractOwner && isSameAddr(currentAccount, contractOwner)){
+          await refreshPool();
+        }
+
+        const maxReturn = Number($("maxReturn").innerText);
+        const item = {
+          time: Date.now(),
+          tokenId: id,
+          reward: reward,
+          txHash: tx.hash,
+          racesLeft: (racesLeft !== null) ? racesLeft : Number($("races").innerText),
+          returned: (returned !== null) ? returned : Number($("returned").innerText),
+          maxReturn: isFinite(maxReturn) ? maxReturn : Number($("maxReturn").innerText)
+        };
+        addHistory(item);
+
+        // 3) Interpretación visual (puesto) basada en el reward real
+        const place = rewardToPlace(reward);
+
+        // 4) Overlay final con podio
+        openResultOverlay({
+          place,
+          tokenId: id,
+          reward,
+          racesLeft: item.racesLeft,
+          returned: item.returned,
+          maxReturn: item.maxReturn,
+          txHash: tx.hash
+        });
+
+      }catch(e){
+        // Si el usuario rechaza en MetaMask o falla, cerramos overlay y avisamos
+        closeTxOverlay();
+        showToast("Race cancelado o falló. (Revisá gas y balance POL)");
+      }finally{
+        setBusy(false);
+      }
+    }
+
+
+    function copyAddress(){
+      const a = currentAccount;
+      if(!a){ showToast("No hay wallet conectada."); return; }
+      navigator.clipboard.writeText(a);
+      showToast("Wallet copiada al portapapeles.");
+    }
+
+    function openExplorer(){
+      window.open(`https://amoy.polygonscan.com/address/${CONTRACT}`, "_blank");
+    }
+
+    // Init
+    $("contract").innerText = CONTRACT;
+    renderHistory();
+
+    $("tokenInput").addEventListener("change", syncSelectWithTokenInput);
+    $("tokenInput").addEventListener("keyup", (e) => {
+      if(e.key === "Enter") readCar();
+    });
+  </script>
+</body>
+</html>
