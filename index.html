@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MicroRacers POL — On-Chain</title>
+<style>
+:root{
+  --bg:#0b0f14;
+  --card:#16221c;
+  --border:rgba(255,255,255,0.08);
+  --text:#f3f4f6;
+  --muted:rgba(203,213,225,0.70);
+  --ok:#22c55e;
+  --bad:#ef4444;
+  --warn:#facc15;
+  --btn:rgba(255,255,255,0.06);
+  --btn2:linear-gradient(135deg,#22c55e,#3b82f6);
+  --shadow:0 12px 34px rgba(0,0,0,0.55);
+  --radius:16px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh;
+  background:
+    radial-gradient(1200px 800px at 20% 10%, rgba(0,255,163,0.08), transparent 60%),
+    radial-gradient(1200px 800px at 80% 20%, rgba(0,140,255,0.08), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:Arial, sans-serif;
+  display:flex; justify-content:center; align-items:center;
+  padding:18px;
+}
+.panel{
+  width:100%; max-width:760px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(10px);
+}
+.top{display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:12px;}
+.title{font-size:28px; font-weight:800; letter-spacing:.2px;}
+.subtitle{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.35;}
+.pill{
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:999px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,0.22);
+  color:var(--muted);
+  font-size:12px; white-space:nowrap;
+}
+.grid{display:grid; grid-template-columns:1.2fr 0.8fr; gap:14px; margin-top:12px;}
+@media (max-width:780px){.grid{grid-template-columns:1fr}}
+.card{
+  background:rgba(0,255,163,0.07);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+}
+.row{margin-top:10px; font-size:16px;}
+.small{font-size:12px; color:var(--muted); word-break:break-word; margin-top:6px;}
+.status{
+  font-size:12px; font-weight:800;
+  padding:3px 8px; border-radius:999px;
+  border:1px solid var(--border);
+  margin-left:10px;
+  display:inline-block;
+  transform:translateY(-2px);
+}
+.ok{color:var(--ok)}
+.bad{color:var(--bad)}
+.warn{color:var(--warn)}
+.controls{
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+}
+.controls h3{margin:0 0 10px 0; font-size:14px; color:var(--muted); font-weight:800; letter-spacing:.2px;}
+.inputRow{display:flex; gap:10px; align-items:center; margin-top:10px;}
+.input{
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(255,255,255,0.06);
+  color:var(--text);
+  outline:none;
+  font-size:14px;
+}
+.btn{
+  width:100%;
+  padding:13px 14px;
+  font-size:15px;
+  font-weight:800;
+  border-radius:14px;
+  border:1px solid var(--border);
+  cursor:pointer;
+  color:var(--text);
+  background:var(--btn);
+  transition:.18s ease;
+  user-select:none;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0); opacity:.95}
+.btn:disabled{opacity:.55; cursor:not-allowed; transform:none}
+.btnPrimary{background:var(--btn2); border:1px solid rgba(255,255,255,0.14);}
+.btnLine{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;}
+.btnLine3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:10px;}
+@media (max-width:560px){.btnLine,.btnLine3{grid-template-columns:1fr}}
+
+.adminBox{
+  margin-top:12px;
+  padding:12px;
+  border-radius:var(--radius);
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(0,0,0,0.18);
+  display:none;
+}
+.adminTop{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+.adminTitle{font-size:13px; font-weight:900; letter-spacing:.2px; color:rgba(231,237,245,0.92);}
+
+/* Toast */
+.toastWrap{
+  position:fixed; bottom:18px; left:50%;
+  transform:translateX(-50%);
+  width:min(740px, calc(100vw - 28px));
+  pointer-events:none;
+}
+.toast{
+  pointer-events:auto;
+  background:rgba(0,0,0,0.60);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:14px;
+  padding:12px 14px;
+  box-shadow:var(--shadow);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  animation:pop .18s ease;
+}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast .t{font-size:13px; color:var(--text)}
+.toast .x{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.12);
+  color:var(--text);
+  border-radius:10px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:800;
+}
+.spinner{
+  width:14px; height:14px;
+  border:2px solid rgba(255,255,255,0.25);
+  border-top-color:rgba(255,255,255,0.85);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  display:inline-block;
+  vertical-align:middle;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* History */
+.history{
+  margin-top:12px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+}
+.historyTop{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;}
+.history h3{margin:0; font-size:14px; color:var(--muted); font-weight:800;}
+.historyList{
+  display:flex; flex-direction:column; gap:8px;
+  max-height:260px; overflow:auto; padding-right:4px;
+}
+.item{
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(0,0,0,0.18);
+  border-radius:12px;
+  padding:10px 12px;
+  display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+}
+.item .l{display:flex; flex-direction:column; gap:4px; min-width:0;}
+.item .r{text-align:right; white-space:nowrap; font-weight:800;}
+.mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;}
+.link{color:rgba(231,237,245,0.85); text-decoration:underline; cursor:pointer;}
+.muted{color:var(--muted);}
+
+/* Overlays (Tx + Resultado) */
+.overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.55);
+  backdrop-filter:blur(10px);
+  display:none;
+  align-items:center; justify-content:center;
+  padding:18px;
+  z-index:9999;
+}
+.overlay.show{display:flex;}
+.modalCard{
+  width:min(820px, calc(100vw - 28px));
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,0.14);
+  background:radial-gradient(1200px 420px at 20% 0%, rgba(0,255,163,0.14), rgba(10,14,20,0.90));
+  box-shadow:0 30px 80px rgba(0,0,0,0.60);
+  overflow:hidden;
+}
+.modalHead{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px;
+  padding:16px 16px 12px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+.ttl{font-size:30px; font-weight:950; letter-spacing:.2px; line-height:1.05;}
+.mini{margin-top:6px; font-size:12px; color:var(--muted);}
+.modalBody{padding:16px;}
+.txRow{
+  display:flex; gap:14px; align-items:center;
+  padding:12px; border-radius:16px;
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.04);
+}
+.bigSpinner{
+  width:34px; height:34px; border-radius:999px;
+  border:3px solid rgba(255,255,255,0.20);
+  border-top-color:rgba(255,255,255,0.88);
+  animation:spin .9s linear infinite;
+  flex:0 0 auto;
+}
+.txText .h{font-size:15px; font-weight:900;}
+.txText .p{font-size:12px; color:var(--muted); margin-top:4px; line-height:1.35;}
+.txHash{margin-top:8px; font-size:12px; color:rgba(231,237,245,0.92); word-break:break-word;}
+.stepPill{display:inline-flex; align-items:center; gap:8px; padding:7px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.10); background:rgba(0,0,0,0.18);}
+.stepDot{width:10px; height:10px; border-radius:99px; background:rgba(255,255,255,0.30); box-shadow:0 0 0 rgba(0,0,0,0);}
+#txOverlay.state-sign .stepDot{background:rgba(250,204,21,0.9); box-shadow:0 0 18px rgba(250,204,21,0.35);}
+#txOverlay.state-wait .stepDot{background:rgba(34,197,94,0.92); box-shadow:0 0 18px rgba(34,197,94,0.35);}
+.progressWrap{margin-top:12px; height:10px; border-radius:999px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); overflow:hidden;}
+.progressBar{height:100%; width:35%; border-radius:999px; background:linear-gradient(90deg, rgba(34,197,94,0.85), rgba(59,130,246,0.85)); animation:progressSlide 1.25s ease-in-out infinite;}
+@keyframes progressSlide{0%{transform:translateX(-60%)}50%{transform:translateX(60%)}100%{transform:translateX(-60%)}}
+
+/* Resultado skins */
+#resultOverlay.res-gold .modalCard{background:radial-gradient(1200px 420px at 20% 0%, rgba(255,208,92,0.22), rgba(10,14,20,0.90)); border-color:rgba(255,208,92,0.22);}
+#resultOverlay.res-silver .modalCard{background:radial-gradient(1200px 420px at 20% 0%, rgba(215,226,255,0.20), rgba(10,14,20,0.90)); border-color:rgba(215,226,255,0.20);}
+#resultOverlay.res-bronze .modalCard{background:radial-gradient(1200px 420px at 20% 0%, rgba(211,144,91,0.20), rgba(10,14,20,0.90)); border-color:rgba(211,144,91,0.22);}
+.resultGrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px;}
+.kv{border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:10px 12px; background:rgba(255,255,255,0.04);}
+.kv .k{font-size:11px; color:var(--muted); margin-bottom:4px;}
+.kv .v{font-size:14px; font-weight:900;}
+.podiumWrap{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; align-items:end; margin-top:14px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.10);}
+.podiumCol{display:flex; flex-direction:column; align-items:center; gap:8px; width:100%;}
+.podiumBar{
+  position:relative;
+  width:100%;
+  height:22px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,0.10);
+  background:rgba(255,255,255,0.05);
+  transform-origin:bottom;
+  transform:scaleY(0.12);
+  opacity:0.6;
+  overflow:hidden;
+}
+.podiumLbl{font-size:12px; color:var(--muted); letter-spacing:.2px;}
+.podiumCar{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none;
+  filter:drop-shadow(0 12px 24px rgba(0,0,0,0.60));
+}
+.podiumCar .carEmoji{font-size:clamp(44px, 7vw, 84px); line-height:1; transform:translateY(-2px);}
+.podiumCar .carNum{
+  position:absolute; top:10px; right:10px;
+  font-size:14px; font-weight:950;
+  width:28px; height:28px;
+  display:grid; place-items:center;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.20);
+  background:rgba(0,0,0,0.30);
+  color:rgba(255,255,255,0.95);
+  backdrop-filter:blur(8px);
+}
+.podiumCol.win .podiumCar{opacity:1; animation:carPop 420ms ease-out forwards;}
+@keyframes carPop{0%{transform:scale(0.55); opacity:0}100%{transform:scale(1); opacity:1}}
+.podiumRun .podiumCol:nth-child(1) .podiumBar{animation:rise2 420ms ease-out forwards;}
+.podiumRun .podiumCol:nth-child(2) .podiumBar{animation:rise1 520ms ease-out forwards;}
+.podiumRun .podiumCol:nth-child(3) .podiumBar{animation:rise3 360ms ease-out forwards;}
+@keyframes rise1{to{transform:scaleY(1); opacity:1; height:86px;}}
+@keyframes rise2{to{transform:scaleY(1); opacity:.95; height:64px;}}
+@keyframes rise3{to{transform:scaleY(1); opacity:.92; height:48px;}}
+.modalActions{display:flex; justify-content:flex-end; gap:10px; margin-top:14px;}
+</style>
+</head>
+<body>
+<div class="panel">
+  <div class="top">
+    <div>
+      <div class="title">MicroRacers POL</div>
+      <div class="subtitle">
+        Juego on-chain en <b>Polygon Amoy</b> • ROI tope +20% • Carreras limitadas<br/>
+        Contrato Game: <span class="mono" id="contractGame"></span><br/>
+        Contrato Cars: <span class="mono" id="contractCars"></span>
+      </div>
+    </div>
+    <div class="pill">
+      <span id="netDot">●</span>
+      <span id="network">—</span>
+      <span class="muted">|</span>
+      <span id="wallet">wallet: —</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="card">
+      <div class="row">🚗 Auto #<span id="tokenId">—</span><span class="status" id="status">—</span></div>
+
+      <div style="margin-top:10px;">
+        <img id="carImage" alt="NFT" style="width:100%; max-height:260px; object-fit:cover; border-radius:14px; border:1px solid rgba(255,255,255,0.10); background:rgba(0,0,0,0.18); display:none;" />
+        <div class="small muted" id="carImageHint" style="margin-top:8px;">(La imagen se obtiene desde tokenURI del NFT)</div>
+      </div>
+
+      <div class="row">Carreras: <b id="races">—</b> / <span id="racesTotal">—</span></div>
+      <div class="row">Retorno: <b id="returned">—</b> / <span id="maxReturn">—</span> POL</div>
+      <div class="small">Owner: <span class="mono" id="owner">—</span></div>
+      <div class="small">Última recompensa: <b id="lastReward">—</b> POL</div>
+      <div class="small">Última tx: <span class="mono" id="lastTx">—</span></div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="controls">
+      <h3>Acciones</h3>
+
+      <button class="btn" id="btnConnect">🔌 Conectar MetaMask</button>
+
+      <div class="btnLine">
+        <button class="btn" id="btnSwitch">🧭 Cambiar a Amoy</button>
+        <button class="btn btnPrimary" id="btnRead">📥 Leer Auto</button>
+      </div>
+
+      <div class="inputRow">
+        <select class="input" id="carSelect" disabled>
+          <option value="">— Tus autos (conectá wallet) —</option>
+        </select>
+      </div>
+
+      <div class="small" style="margin-top:6px;">
+        Tip: el desplegable se arma usando <b>ERC721Enumerable</b> (balanceOf + tokenOfOwnerByIndex).
+      </div>
+
+      <div class="inputRow">
+        <input class="input" id="tokenInput" type="number" min="1" step="1" value="1"/>
+      </div>
+
+      <div class="btnLine">
+        <button class="btn" id="btnMint">🧾 Mint (0.01 POL)</button>
+        <button class="btn btnPrimary" id="btnRace">🏁 CORRER</button>
+      </div>
+
+      <div class="adminBox" id="adminBox">
+        <div class="adminTop">
+          <div class="adminTitle">👑 Admin (Owner)</div>
+          <div class="small muted">Pool: <b id="poolPol">0.0000</b> POL</div>
+        </div>
+        <div class="small">Owner del contrato: <span class="mono" id="ownerAddr">—</span></div>
+        <div class="inputRow">
+          <input class="input" id="withdrawAmount" type="number" min="0" step="0.0001" placeholder="Monto a retirar (POL)"/>
+        </div>
+        <div class="btnLine">
+          <button class="btn" id="btnRefreshPool">🔄 Actualizar pool</button>
+          <button class="btn btnPrimary" id="btnWithdraw">⬇️ Retirar</button>
+        </div>
+        <div class="small muted" style="margin-top:8px;">Nota: el retiro es <b>parcial</b> y se envía a tu wallet conectada (owner).</div>
+      </div>
+
+      <div class="btnLine3">
+        <button class="btn" id="btnClearHist">🧹 Limpiar historial</button>
+        <button class="btn" id="btnCopy">📋 Copiar wallet</button>
+        <button class="btn" id="btnExplorer">🔎 Ver en Explorer</button>
+      </div>
+
+      <div class="small" style="margin-top:10px;">
+        Consejo dev: si hay picos de gas, subí <b>priority fee</b> y <b>max fee</b> desde MetaMask.
+      </div>
+    </div>
+  </div>
+
+  <div class="history">
+    <div class="historyTop">
+      <h3>Historial (últimas 30)</h3>
+      <div class="small">Se guarda en tu navegador (localStorage).</div>
+    </div>
+    <div class="historyList" id="historyList"></div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toastWrap" id="toastWrap" style="display:none;">
+  <div class="toast">
+    <div class="t" id="toastText">—</div>
+    <button class="x" id="toastOk">OK</button>
+  </div>
+</div>
+
+<!-- Overlay TX -->
+<div class="overlay" id="txOverlay" aria-hidden="true">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-label="Transacción en progreso">
+    <div class="modalHead">
+      <div>
+        <div class="ttl" id="txTitle">Transacción</div>
+        <div class="mini stepPill"><span class="stepDot"></span><span id="txStepText">—</span></div>
+      </div>
+      <div class="mini" id="txSub">—</div>
+    </div>
+    <div class="modalBody">
+      <div class="txRow">
+        <div class="bigSpinner" aria-hidden="true"></div>
+        <div class="txText">
+          <div class="h" id="txMain">MicroRacers POL</div>
+          <div class="p" id="txHint">—</div>
+          <div class="txHash" id="txHash"></div>
+        </div>
+      </div>
+      <div class="progressWrap" aria-hidden="true"><div class="progressBar"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay Resultado -->
+<div class="overlay" id="resultOverlay" aria-hidden="true">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-label="Resultado de carrera">
+    <div class="modalHead">
+      <div>
+        <div class="ttl" id="resPlace">—</div>
+        <div class="mini">Auto <span class="mono" id="resTokenId">—</span> · Tx <span class="link mono" id="resTx">—</span></div>
+      </div>
+      <button class="btn" id="btnCloseResult">Cerrar</button>
+    </div>
+    <div class="modalBody">
+      <div class="resultGrid">
+        <div class="kv"><div class="k">Recompensa</div><div class="v" id="resReward">—</div></div>
+        <div class="kv"><div class="k">Carreras restantes</div><div class="v" id="resRacesLeft">—</div></div>
+        <div class="kv"><div class="k">Retorno acumulado</div><div class="v" id="resReturned">—</div></div>
+        <div class="kv"><div class="k">Máx. retorno</div><div class="v" id="resMaxReturn">—</div></div>
+      </div>
+
+      <div class="podiumWrap" id="podium">
+        <div class="podiumCol" data-place="2">
+          <div class="podiumBar"><div class="podiumCar" aria-hidden="true"><span class="carEmoji">🏎️</span><span class="carNum">2</span></div></div>
+          <div class="podiumLbl">2°</div>
+        </div>
+        <div class="podiumCol" data-place="1">
+          <div class="podiumBar"><div class="podiumCar" aria-hidden="true"><span class="carEmoji">🏎️</span><span class="carNum">1</span></div></div>
+          <div class="podiumLbl">1°</div>
+        </div>
+        <div class="podiumCol" data-place="3">
+          <div class="podiumBar"><div class="podiumCar" aria-hidden="true"><span class="carEmoji">🏎️</span><span class="carNum">3</span></div></div>
+          <div class="podiumLbl">3°</div>
+        </div>
+      </div>
+
+      <div class="modalActions">
+        <button class="btn btnPrimary" id="btnOkResult">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<script>
+/* ================= CONFIG (AMOY + CONTRATOS) ================= */
+const GAME_CONTRACT = "0xEDae2991EfF26294f48A43771103904e5390a22E";
+const CARS_CONTRACT = "0xE55883A459027d7432DEa5890a23ed0954B057e4";
+
+const AMOY_ID_DEC = 80002;
+const AMOY_ID_HEX = "0x13882"; // 80002
+
+const AMOY_PARAMS = {
+  chainId: AMOY_ID_HEX,
+  chainName: "Polygon Amoy",
+  nativeCurrency: { name:"POL", symbol:"POL", decimals:18 },
+  rpcUrls: ["https://rpc-amoy.polygon.technology/"],
+  blockExplorerUrls: ["https://amoy.polygonscan.com/"]
+};
+
+/* ABI del Game (MicroRacersGame_step1.sol) */
+const ABI_GAME = [
+  "function race(uint256 tokenId) external",
+  "function getCar(uint256 tokenId) external view returns (uint256,uint256,uint256,uint256,address)",
+  "function poolBalance() external view returns (uint256)",
+  "function owner() external view returns (address)",
+  "function withdrawPool(address payable to, uint256 amount) external",
+  "event RaceResult(uint256 indexed tokenId, address indexed player, uint256 reward, uint256 racesLeft, uint256 returnedAmount)",
+  "event OwnerWithdraw(address indexed to, uint256 amount)"
+];
+
+/* ABI del Cars (MicroRacersCars_step2_remix.sol) */
+const ABI_CARS = [
+  "function mintCar() external payable",
+  "function ownerOf(uint256 tokenId) external view returns (address)",
+  "function tokenURI(uint256 tokenId) external view returns (string)",
+  "function balanceOf(address owner) external view returns (uint256)",
+  "function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)",
+  "event CarMinted(uint256 indexed tokenId, address indexed owner, uint8 modelId)"
+];
+
+/* ================= STATE ================= */
+let provider = null;
+let signer = null;
+let currentAccount = null;
+
+let gameRO = null, gameRW = null;
+let carsRO = null, carsRW = null;
+
+let contractOwner = null;
+let myCars = [];
+let busy = false;
+let isConnecting = false;
+
+const HISTORY_KEY = "microracers_history_v2";
+const HISTORY_MAX = 30;
+let _lastResultTxHash = null;
+
+/* ================= UI HELPERS ================= */
+const $ = (id) => document.getElementById(id);
+const short = (a) => a ? (a.slice(0,6) + "..." + a.slice(-4)) : "—";
+
+function fmtPol(x){
+  const n = Number(x);
+  if(!isFinite(n)) return "—";
+  return n.toFixed(4);
+}
+function explorerTx(hash){ return `https://amoy.polygonscan.com/tx/${hash}`; }
+function explorerAddr(addr){ return `https://amoy.polygonscan.com/address/${addr}`; }
+function isSameAddr(a,b){ return !!a && !!b && String(a).toLowerCase() === String(b).toLowerCase(); }
+
+function showToast(text){
+  $("toastText").innerText = text;
+  $("toastWrap").style.display = "block";
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(hideToast, 3500);
+}
+function hideToast(){ $("toastWrap").style.display = "none"; }
+
+/* Compat: el HTML anterior llamaba toast() */
+function toast(text){ showToast(text); }
+
+function setNetworkBadge(chainId){
+  const isAmoy = Number(chainId) === AMOY_ID_DEC;
+  $("network").innerText = isAmoy ? "Amoy" : `Chain ${chainId}`;
+  $("netDot").style.color = isAmoy ? "#4cffb2" : "#ffd66b";
+}
+
+function setWalletUI(addr){
+  $("wallet").innerText = addr ? `wallet: ${short(addr)}` : "wallet: —";
+}
+
+function setConnectedUI(connected){
+  $("btnConnect").innerText = connected ? "✅ Wallet conectada" : "🔌 Conectar MetaMask";
+  $("carSelect").disabled = !connected || busy;
+  if(!connected){
+    $("carSelect").innerHTML = '<option value="">— Tus autos (conectá wallet) —</option>';
+    $("adminBox").style.display = "none";
+    $("ownerAddr").innerText = "—";
+    $("poolPol").innerText = "0.0000";
+  }
+}
+
+function setBusy(on, label=null){
+  busy = on;
+  const disableIds = ["btnConnect","btnSwitch","btnRead","btnMint","btnRace","carSelect","tokenInput","btnWithdraw","btnRefreshPool","withdrawAmount"];
+  for(const id of disableIds){
+    const el = $(id);
+    if(!el) continue;
+
+    if(["btnWithdraw","btnRefreshPool","withdrawAmount"].includes(id)){
+      const isOwnerNow = currentAccount && contractOwner && isSameAddr(currentAccount, contractOwner);
+      el.disabled = on || !isOwnerNow;
+      continue;
+    }
+    if(id === "carSelect"){
+      el.disabled = on || !currentAccount;
+      continue;
+    }
+    el.disabled = on;
+  }
+  $("btnRace").innerHTML = on ? `${label || "Procesando"} <span class="spinner"></span>` : "🏁 CORRER";
+}
+
+/* ================= HISTORY ================= */
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); }catch{ return []; }
+}
+function saveHistory(items){
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items.slice(0, HISTORY_MAX)));
+  renderHistory();
+}
+function addHistory(item){
+  const items = loadHistory();
+  items.unshift(item);
+  saveHistory(items);
+}
+function clearHistory(){
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+  showToast("Historial limpiado.");
+}
+function renderHistory(){
+  const items = loadHistory();
+  const box = $("historyList");
+  box.innerHTML = "";
+  if(items.length === 0){
+    box.innerHTML = '<div class="small muted">Todavía no hay carreras registradas.</div>';
+    return;
+  }
+  for(const it of items){
+    const div = document.createElement("div");
+    div.className = "item";
+    const time = new Date(it.time).toLocaleString();
+    div.innerHTML = `
+      <div class="l">
+        <div><b>Auto #${it.tokenId}</b> <span class="muted">•</span> <span class="muted">${time}</span></div>
+        <div class="small muted">Tx: <span class="link mono" data-tx="${it.txHash}">${short(it.txHash)}</span></div>
+        <div class="small muted">Carreras: ${it.racesLeft} • Retorno: ${fmtPol(it.returned)} / ${fmtPol(it.maxReturn)} POL</div>
+      </div>
+      <div class="r ${Number(it.reward) > 0 ? "ok" : "warn"}">${Number(it.reward) > 0 ? "+" : ""}${fmtPol(it.reward)} POL</div>
+    `;
+    div.querySelector("[data-tx]").onclick = (e) => window.open(explorerTx(e.target.getAttribute("data-tx")), "_blank");
+    box.appendChild(div);
+  }
+}
+
+/* ================= OVERLAYS ================= */
+function openTxOverlay(){
+  const o = $("txOverlay");
+  o.classList.add("show");
+  o.setAttribute("aria-hidden","false");
+}
+function closeTxOverlay(){
+  const o = $("txOverlay");
+  o.classList.remove("show","state-sign","state-wait");
+  o.setAttribute("aria-hidden","true");
+  $("txHash").innerHTML = "";
+}
+function setTxState(state, tokenId){
+  const o = $("txOverlay");
+  o.classList.remove("state-sign","state-wait");
+  if(state === "sign"){
+    o.classList.add("state-sign");
+    $("txTitle").innerText = "CORRER";
+    $("txStepText").innerText = "Esperando firma en wallet";
+    $("txSub").innerText = tokenId ? `Auto #${tokenId}` : "—";
+    $("txHint").innerText = "Confirmá la transacción en MetaMask para iniciar la carrera.";
+  }else{
+    o.classList.add("state-wait");
+    $("txTitle").innerText = "Carrera en progreso";
+    $("txStepText").innerText = "Confirmando en la red";
+    $("txSub").innerText = tokenId ? `Auto #${tokenId}` : "—";
+    $("txHint").innerText = "La carrera se está confirmando on-chain. Esto puede tardar unos segundos.";
+  }
+}
+function setTxHash(hash){
+  if(!hash) return;
+  $("txHash").innerHTML = `Tx: <span class="link mono" id="txHashLink">${hash}</span>`;
+  $("txHashLink").onclick = () => window.open(explorerTx(hash), "_blank");
+}
+function closeResult(){
+  const wrap = $("resultOverlay");
+  wrap.classList.remove("show","res-gold","res-silver","res-bronze");
+  wrap.setAttribute("aria-hidden","true");
+}
+function openResTx(){
+  if(_lastResultTxHash) window.open(explorerTx(_lastResultTxHash), "_blank");
+}
+function rewardToPlace(reward){
+  const r = Number(reward);
+  if(!isFinite(r) || r <= 0) return 3;
+  // Los tiers del contrato: 0.00090 / 0.00060 / 0.00045
+  const tiers = [0.00090, 0.00060, 0.00045];
+  let best = 0, bestDiff = Infinity;
+  for(let i=0;i<tiers.length;i++){
+    const d = Math.abs(tiers[i] - r);
+    if(d < bestDiff){ bestDiff = d; best = i; }
+  }
+  return best === 0 ? 1 : (best === 1 ? 2 : 3);
+}
+function openResultOverlay({place, tokenId, reward, racesLeft, returned, maxReturn, txHash}){
+  const wrap = $("resultOverlay");
+  wrap.classList.remove("res-gold","res-silver","res-bronze");
+  wrap.classList.add("show");
+  wrap.setAttribute("aria-hidden","false");
+  _lastResultTxHash = txHash || null;
+
+  let title = "PUESTO";
+  if(place === 1){ wrap.classList.add("res-gold"); title = "🥇 1° PUESTO"; }
+  else if(place === 2){ wrap.classList.add("res-silver"); title = "🥈 2° PUESTO"; }
+  else { wrap.classList.add("res-bronze"); title = "🥉 3° PUESTO"; }
+
+  $("resPlace").innerText = title;
+  $("resTokenId").innerText = String(tokenId ?? "—");
+  $("resTx").innerText = txHash ? short(txHash) : "—";
+  $("resReward").innerText = `${fmtPol(reward)} POL`;
+  $("resRacesLeft").innerText = String(racesLeft ?? "—");
+  $("resReturned").innerText = `${fmtPol(returned)} POL`;
+  $("resMaxReturn").innerText = `${fmtPol(maxReturn)} POL`;
+
+  $("resTx").onclick = openResTx;
+
+  const podium = $("podium");
+  podium.classList.remove("podiumRun");
+  const cols = podium.querySelectorAll(".podiumCol");
+  cols.forEach(c => c.classList.remove("win"));
+  const winCol = podium.querySelector(`.podiumCol[data-place="${place}"]`);
+  if(winCol) winCol.classList.add("win");
+  void podium.offsetWidth;
+  podium.classList.add("podiumRun");
+}
+
+/* ================= WEB3 CORE ================= */
+async function initEthers(){
+  provider = new ethers.BrowserProvider(window.ethereum);
+  const net = await provider.getNetwork();
+  setNetworkBadge(Number(net.chainId));
+
+  if(currentAccount){
+    signer = await provider.getSigner();
+    gameRO = new ethers.Contract(GAME_CONTRACT, ABI_GAME, provider);
+    carsRO = new ethers.Contract(CARS_CONTRACT, ABI_CARS, provider);
+    gameRW = new ethers.Contract(GAME_CONTRACT, ABI_GAME, signer);
+    carsRW = new ethers.Contract(CARS_CONTRACT, ABI_CARS, signer);
+  }
+}
+
+/* Asegura Amoy. Si forcePopup=true, abre el popup de cambio/agregar red. */
+async function ensureAmoy(forcePopup){
+  const chainIdHex = await window.ethereum.request({ method:"eth_chainId" });
+  const chainIdDec = parseInt(chainIdHex, 16);
+  setNetworkBadge(chainIdDec);
+  if(chainIdDec === AMOY_ID_DEC) return true;
+  if(!forcePopup) return false;
+
+  try{
+    await window.ethereum.request({
+      method:"wallet_switchEthereumChain",
+      params:[{ chainId: AMOY_ID_HEX }]
+    });
+    setNetworkBadge(AMOY_ID_DEC);
+    return true;
+  }catch(err){
+    if(err && (err.code === 4902 || (""+err.message).toLowerCase().includes("unrecognized chain"))){
+      await window.ethereum.request({
+        method:"wallet_addEthereumChain",
+        params:[AMOY_PARAMS]
+      });
+      setNetworkBadge(AMOY_ID_DEC);
+      return true;
+    }
+    throw err;
+  }
+}
+
+/* ================= CONNECT / LISTENERS ================= */
+async function connect(){
+  if(isConnecting) return;
+  isConnecting = true;
+
+  try{
+    if(!window.ethereum){
+      showToast("No se detectó MetaMask.");
+      return;
+    }
+
+    // pedir cuentas (si no hay)
+    let accounts = await window.ethereum.request({ method:"eth_accounts" });
+    if(!accounts || accounts.length === 0){
+      accounts = await window.ethereum.request({ method:"eth_requestAccounts" });
+    }
+    if(!accounts || accounts.length === 0){
+      showToast("Conexión cancelada.");
+      return;
+    }
+
+    currentAccount = accounts[0];
+    setWalletUI(currentAccount);
+
+    await initEthers();
+
+    const ok = await ensureAmoy(false);
+    if(!ok){
+      showToast("Conectado, pero estás en otra red. Tocá “Cambiar a Amoy”.");
+    }else{
+      showToast("Wallet conectada en Amoy.");
+    }
+
+    // listeners (una sola vez)
+    if(!connect._listeners){
+      window.ethereum.on?.("accountsChanged", onAccountsChanged);
+      window.ethereum.on?.("chainChanged", () => location.reload());
+    }
+    connect._listeners = true;
+
+    setConnectedUI(true);
+    await loadOwnerAndAdminUI();
+    await loadMyCars();
+  }catch(err){
+    console.error(err);
+    const msg = String(err?.message || "");
+    if(msg.toLowerCase().includes("already processing")){
+      showToast("MetaMask ya tiene una solicitud abierta. Cerrala y probá de nuevo.");
+    }else{
+      showToast("Conexión cancelada o falló.");
+    }
+  }finally{
+    isConnecting = false;
+  }
+}
+
+async function onAccountsChanged(accs){
+  currentAccount = (accs && accs[0]) ? accs[0] : null;
+  setWalletUI(currentAccount);
+  setConnectedUI(!!currentAccount);
+  contractOwner = null;
+  myCars = [];
+
+  if(!currentAccount) return;
+
+  await initEthers();
+  showToast("Cuenta cambiada.");
+  await loadOwnerAndAdminUI();
+  await loadMyCars();
+}
+
+/* ================= ADMIN ================= */
+async function loadOwnerAndAdminUI(){
+  if(!gameRO || !currentAccount) return;
+  try{
+    contractOwner = await gameRO.owner();
+    $("ownerAddr").innerText = contractOwner || "—";
+    const isOwnerNow = isSameAddr(currentAccount, contractOwner);
+    $("adminBox").style.display = isOwnerNow ? "block" : "none";
+    if(isOwnerNow) await refreshPool();
+  }catch{
+    contractOwner = null;
+    $("adminBox").style.display = "none";
+  }
+}
+
+async function refreshPool(){
+  if(!gameRO){ showToast("Primero conectá MetaMask."); return; }
+  try{
+    const balWei = await gameRO.poolBalance();
+    $("poolPol").innerText = fmtPol(Number(ethers.formatEther(balWei)));
+  }catch{
+    showToast("No se pudo leer poolBalance().");
+  }
+}
+
+async function withdraw(){
+  if(!gameRW || !currentAccount || !contractOwner){ showToast("Primero conectá MetaMask."); return; }
+  if(!isSameAddr(currentAccount, contractOwner)){ showToast("Solo el owner puede retirar."); return; }
+
+  const amountStr = String($("withdrawAmount").value || "").trim();
+  const amount = Number(amountStr);
+  if(!amountStr || !isFinite(amount) || amount <= 0){ showToast("Monto inválido."); return; }
+
+  try{
+    setBusy(true, "Retirando");
+    showToast("Confirmá el retiro en MetaMask…");
+    const tx = await gameRW.withdrawPool(currentAccount, ethers.parseEther(amountStr));
+    showToast(`Retiro enviado: ${short(tx.hash)}`);
+    await tx.wait();
+    showToast("Retiro confirmado.");
+    $("withdrawAmount").value = "";
+    await refreshPool();
+  }catch(e){
+    console.error(e);
+    showToast("Retiro cancelado o falló.");
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* ================= SELECTOR (MIS AUTOS) ================= */
+async function loadMyCars(){
+  if(!carsRO || !currentAccount){
+    $("carSelect").innerHTML = '<option value="">— Tus autos (conectá wallet) —</option>';
+    myCars = [];
+    return;
+  }
+
+  setBusy(true, "Cargando autos");
+  try{
+    $("carSelect").innerHTML = '<option value="">⏳ Leyendo tus NFTs…</option>';
+    const bal = Number(await carsRO.balanceOf(currentAccount));
+    if(!bal || bal <= 0){
+      myCars = [];
+      $("carSelect").innerHTML = '<option value="">— No tenés autos NFT —</option>';
+      return;
+    }
+
+    const ids = [];
+    for(let i=0;i<bal;i++){
+      const tid = await carsRO.tokenOfOwnerByIndex(currentAccount, i);
+      ids.push(Number(tid));
+    }
+    ids.sort((a,b)=>a-b);
+    myCars = ids;
+
+    const opts = ['<option value="">— Elegí un auto —</option>'];
+    for(const id of myCars) opts.push(`<option value="${id}">Auto #${id}</option>`);
+    $("carSelect").innerHTML = opts.join("");
+
+    // autoselect
+    const currentId = Number($("tokenInput").value);
+    const pick = myCars.includes(currentId) ? currentId : myCars[0];
+    $("carSelect").value = String(pick);
+    $("tokenInput").value = String(pick);
+
+    await readCar();
+  }catch(e){
+    console.error(e);
+    $("carSelect").innerHTML = '<option value="">— Error cargando autos —</option>';
+    showToast("Error leyendo tus NFTs (RPC). Probá de nuevo.");
+  }finally{
+    setBusy(false);
+  }
+}
+
+async function onSelectCar(){
+  const v = $("carSelect").value;
+  if(!v) return;
+  $("tokenInput").value = Number(v);
+  await readCar();
+}
+
+function syncSelectWithTokenInput(){
+  const id = Number($("tokenInput").value);
+  if(!id || !myCars || myCars.length === 0) return;
+  if(myCars.includes(id)) $("carSelect").value = String(id);
+}
+
+/* ================= NFT IMAGE (tokenURI) ================= */
+function ipfsToHttp(ipfsUrl){
+  if(!ipfsUrl) return "";
+  if(ipfsUrl.startsWith("ipfs://")) return "https://ipfs.io/ipfs/" + ipfsUrl.replace("ipfs://","");
+  return ipfsUrl;
+}
+async function getNftImageUrl(tokenId){
+  if(!carsRO) return "";
+  try{
+    const uri = await carsRO.tokenURI(tokenId);
+
+    // data:application/json;base64,...
+    if(uri.startsWith("data:application/json;base64,")){
+      const jsonStr = atob(uri.split(",")[1]);
+      const meta = JSON.parse(jsonStr);
+      return ipfsToHttp(meta.image || "");
+    }
+
+    // ipfs://... (json)
+    if(uri.startsWith("ipfs://")){
+      const url = "https://ipfs.io/ipfs/" + uri.replace("ipfs://","");
+      const meta = await (await fetch(url)).json();
+      return ipfsToHttp(meta.image || "");
+    }
+
+    // http(s) (json)
+    if(uri.startsWith("http")){
+      const meta = await (await fetch(uri)).json();
+      return ipfsToHttp(meta.image || "");
+    }
+
+    return "";
+  }catch{
+    return "";
+  }
+}
+
+/* ================= GAME ACTIONS ================= */
+async function readCar(){
+  if(!gameRO){
+    showToast("Primero conectá MetaMask.");
+    return;
+  }
+
+  const id = Number($("tokenInput").value);
+  if(!id || id < 1){
+    showToast("TokenId inválido.");
+    return;
+  }
+
+  try{
+    const r = await gameRO.getCar(id);
+    const racesLeft = Number(r[0]);
+    const racesTotal = Number(r[1]);
+    const returned = Number(ethers.formatEther(r[2]));
+    const maxReturn = Number(ethers.formatEther(r[3]));
+    const owner = r[4];
+
+    $("tokenId").innerText = id;
+    $("races").innerText = racesLeft;
+    $("racesTotal").innerText = racesTotal;
+    $("returned").innerText = fmtPol(returned);
+    $("maxReturn").innerText = fmtPol(maxReturn);
+    $("owner").innerText = owner;
+
+    const retired = racesLeft <= 0 || returned >= maxReturn;
+    $("status").innerText = retired ? "RETIRADO" : "ACTIVO";
+    $("status").className = "status " + (retired ? "bad" : "ok");
+
+    syncSelectWithTokenInput();
+
+    // imagen
+    const imgUrl = await getNftImageUrl(id);
+    const imgEl = $("carImage");
+    const hint = $("carImageHint");
+    if(imgUrl){
+      imgEl.src = imgUrl;
+      imgEl.style.display = "block";
+      if(hint) hint.style.display = "none";
+    }else{
+      imgEl.style.display = "none";
+      imgEl.removeAttribute("src");
+      if(hint) hint.style.display = "block";
+    }
+
+    showToast("Lectura OK.");
+  }catch(e){
+    console.error(e);
+    showToast("No se pudo leer el auto (¿token inexistente o Cars no seteado?).");
+  }
+}
+
+async function mint(){
+  if(!carsRW){
+    showToast("Primero conectá MetaMask.");
+    return;
+  }
+  try{
+    setBusy(true, "Mint");
+    showToast("Firmá el mint en MetaMask…");
+
+    // PRICE es 0.01 POL en el Game (const), y Cars exige exactamente PRICE.
+    const tx = await carsRW.mintCar({ value: ethers.parseEther("0.01") });
+    showToast(`Mint enviado: ${short(tx.hash)}`);
+    const receipt = await tx.wait();
+
+    // Parseo CarMinted (del contrato Cars)
+    const iface = new ethers.Interface(ABI_CARS);
+    let tokenId = null;
+    for(const log of receipt.logs){
+      try{
+        const parsed = iface.parseLog(log);
+        if(parsed && parsed.name === "CarMinted"){
+          tokenId = Number(parsed.args.tokenId);
+          break;
+        }
+      }catch{}
+    }
+
+    // refrescar selector + lectura
+    await loadMyCars();
+    if(tokenId){
+      $("tokenInput").value = tokenId;
+      $("carSelect").value = String(tokenId);
+      await readCar();
+      showToast(`Mint OK. Auto #${tokenId} creado.`);
+    }else{
+      showToast("Mint OK. (No pude leer tokenId del evento, pero tu NFT existe).");
+    }
+
+    // si sos owner, el pool subió
+    if(currentAccount && contractOwner && isSameAddr(currentAccount, contractOwner)){
+      await refreshPool();
+    }
+  }catch(e){
+    console.error(e);
+    showToast("Mint cancelado o falló.");
+  }finally{
+    setBusy(false);
+  }
+}
+
+async function race(){
+  if(!gameRW || !gameRO){
+    showToast("Primero conectá MetaMask.");
+    return;
+  }
+  const id = Number($("tokenInput").value);
+  if(!id || id < 1){
+    showToast("TokenId inválido.");
+    return;
+  }
+
+  try{
+    setBusy(true, "Corriendo");
+    openTxOverlay();
+    setTxState("sign", id);
+
+    const tx = await gameRW.race(id);
+
+    setTxState("wait", id);
+    setTxHash(tx.hash);
+
+    $("lastTx").innerHTML = `<span class="link mono" id="lastTxLink">${short(tx.hash)}</span>`;
+    $("lastTxLink").onclick = () => window.open(explorerTx(tx.hash), "_blank");
+
+    const receipt = await tx.wait();
+    closeTxOverlay();
+
+    const iface = new ethers.Interface(ABI_GAME);
+    let reward = 0;
+    let racesLeft = null;
+    let returned = null;
+
+    for(const log of receipt.logs){
+      try{
+        const parsed = iface.parseLog(log);
+        if(parsed && parsed.name === "RaceResult"){
+          reward = Number(ethers.formatEther(parsed.args.reward));
+          racesLeft = Number(parsed.args.racesLeft);
+          returned = Number(ethers.formatEther(parsed.args.returnedAmount));
+          break;
+        }
+      }catch{}
+    }
+
+    $("lastReward").innerText = fmtPol(reward);
+
+    await readCar();
+
+    if(currentAccount && contractOwner && isSameAddr(currentAccount, contractOwner)){
+      await refreshPool();
+    }
+
+    const maxReturn = Number($("maxReturn").innerText);
+    const item = {
+      time: Date.now(),
+      tokenId: id,
+      reward: reward,
+      txHash: tx.hash,
+      racesLeft: (racesLeft !== null) ? racesLeft : Number($("races").innerText),
+      returned: (returned !== null) ? returned : Number($("returned").innerText),
+      maxReturn: isFinite(maxReturn) ? maxReturn : Number($("maxReturn").innerText)
+    };
+    addHistory(item);
+
+    const place = rewardToPlace(reward);
+    openResultOverlay({
+      place,
+      tokenId: id,
+      reward,
+      racesLeft: item.racesLeft,
+      returned: item.returned,
+      maxReturn: item.maxReturn,
+      txHash: tx.hash
+    });
+
+  }catch(e){
+    console.error(e);
+    closeTxOverlay();
+    showToast("Race cancelado o falló. (Revisá gas, pool y ownership)");
+  }finally{
+    setBusy(false);
+  }
+}
+
+/* ================= MISC ACTIONS ================= */
+function copyAddress(){
+  if(!currentAccount){ showToast("No hay wallet conectada."); return; }
+  navigator.clipboard.writeText(currentAccount);
+  showToast("Wallet copiada al portapapeles.");
+}
+function openExplorer(){
+  window.open(explorerAddr(GAME_CONTRACT), "_blank");
+}
+
+/* ================= WIRE UI ================= */
+$("contractGame").innerText = GAME_CONTRACT;
+$("contractCars").innerText = CARS_CONTRACT;
+
+$("btnConnect").onclick = connect;
+$("btnSwitch").onclick = async () => {
+  try{
+    await ensureAmoy(true);
+    await initEthers();
+    showToast("Red cambiada a Amoy.");
+    if(currentAccount){
+      await loadOwnerAndAdminUI();
+      await loadMyCars();
+    }
+  }catch(e){
+    console.error(e);
+    showToast("Cambio de red cancelado o falló.");
+  }
+};
+$("btnRead").onclick = readCar;
+$("btnMint").onclick = mint;
+$("btnRace").onclick = race;
+
+$("carSelect").onchange = onSelectCar;
+$("tokenInput").addEventListener("change", syncSelectWithTokenInput);
+$("tokenInput").addEventListener("keyup", (e) => { if(e.key === "Enter") readCar(); });
+
+$("btnRefreshPool").onclick = refreshPool;
+$("btnWithdraw").onclick = withdraw;
+
+$("btnClearHist").onclick = clearHistory;
+$("btnCopy").onclick = copyAddress;
+$("btnExplorer").onclick = openExplorer;
+
+$("toastOk").onclick = hideToast;
+$("btnCloseResult").onclick = closeResult;
+$("btnOkResult").onclick = closeResult;
+
+/* Auto-init (si el usuario ya tenía permiso) */
+(async function boot(){
+  renderHistory();
+
+  if(window.ethereum){
+    try{
+      const net = await window.ethereum.request({ method:"eth_chainId" });
+      setNetworkBadge(parseInt(net,16));
+    }catch{}
+    try{
+      const accs = await window.ethereum.request({ method:"eth_accounts" });
+      if(accs && accs[0]){
+        currentAccount = accs[0];
+        setWalletUI(currentAccount);
+        await initEthers();
+        setConnectedUI(true);
+        await loadOwnerAndAdminUI();
+        await loadMyCars();
+      }else{
+        setConnectedUI(false);
+      }
+    }catch{
+      setConnectedUI(false);
+    }
+  }else{
+    setConnectedUI(false);
+    showToast("MetaMask no detectado (instalalo para jugar).");
+  }
+})();
+</script>
+</body>
+</html>
